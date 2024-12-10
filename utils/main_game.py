@@ -11,6 +11,7 @@ class Game:
         self.screen = pygame.display.set_mode((width, height))
         self.clock = pygame.time.Clock()
         self.main_bg = pygame.image.load(background_path).convert_alpha()
+        self.board = pygame.image.load("img/board_bg.png").convert_alpha()
         self.main_menu()
 
     # Main Menu
@@ -21,10 +22,9 @@ class Game:
 
     def add_menu_buttons(self):
         menus = {"Play": self.choice_menu, "Exit": self.exit}
-        buttons = []
         y_pos = 300
         for menu, action in menus.items():
-            buttons.append(
+            self.load_list.append(
                 elements.Button(
                     x=150,
                     y=y_pos,
@@ -34,7 +34,6 @@ class Game:
                 )
             )
             y_pos += 110
-        self.load_list.append(buttons)
 
     # Game choice menu
     def choice_menu(self):
@@ -44,13 +43,12 @@ class Game:
 
     def add_choice_buttons(self):
         menus = {
-            "Tic-Tac-Toe": self.main_menu,
+            "Tic-Tac-Toe": self.board_ttt,
             "Back": self.main_menu,
         }
-        buttons = []
         y_pos = 300 - len(menus) * 55 + 55
         for menu, action in menus.items():
-            buttons.append(
+            self.load_list.append(
                 elements.Button(
                     x=150,
                     y=y_pos,
@@ -60,7 +58,30 @@ class Game:
                 )
             )
             y_pos += 110
-        self.load_list.append(buttons)
+
+    # Board
+    def board_ttt(self):
+        self.background = self.board
+        self.load_list = []
+        self.load_list.append(elements.Board_TTT(90, 90))
+        self.load_list.append(
+            elements.Button(
+                x=700,
+                y=300,
+                image_path="./img/wooden_button.png",
+                text="Restart",
+                action=self.load_list[0].init_board,
+            )
+        )
+        self.load_list.append(
+            elements.Button(
+                x=700,
+                y=380,
+                image_path="./img/wooden_button.png",
+                text="Main Menu",
+                action=self.main_menu,
+            )
+        )
 
     # Handle in-app events
     def handle_events(self):
@@ -72,23 +93,21 @@ class Game:
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    for lists in self.load_list:
-                        for item in lists:
-                            item.on_click(event)
+                    for item in self.load_list:
+                        item.on_click(event)
 
         m_pos = pygame.mouse.get_pos()
-        for lists in self.load_list:
-            for item in lists:
-                item.is_hover(m_pos)
+        for item in self.load_list:
+            item.is_hover(m_pos)
 
     # Draw components
     def draw(self):
         self.screen.blit(self.background, (0, 0))
         for item in self.load_list:
-            for i in item:
-                i.draw(self.screen)
+            item.draw(self.screen)
         pygame.display.flip()
 
+    # Main run
     def run(self):
         """Main game loop"""
         while self.running:

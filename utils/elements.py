@@ -1,18 +1,37 @@
 import pygame
+import sys
 
 
-class Button:
+class Element:
+    def __init__(self):
+        pass
+
+    def is_hover(self, mouse_pos):
+        pass
+
+    def on_click(self, event):
+        pass
+
+    def draw(self, surface):
+        pass
+
+
+class Button(Element):
     def __init__(
         self,
         x,
         y,
-        image_path,
+        image_path=None,
         text="",
         font_path="./font/LovelyKids-gxly4.ttf",
         action=None,
     ):
         # Load the image and font
-        self.original_image = pygame.image.load(image_path).convert_alpha()
+        try:
+            self.original_image = pygame.image.load(image_path).convert_alpha()
+        except:
+            pygame.quit()
+            sys.exit()
         self.font = pygame.font.Font(font_path if font_path else None, 35)
         self.action = action if action else lambda: None
 
@@ -59,10 +78,134 @@ class Button:
         text_rect = self.text_surface.get_rect(center=self.rect.center)
         surface.blit(self.text_surface, text_rect)
 
+    # Check if is hovered
     def is_hover(self, mouse_pos):
         self.hover = self.rect.collidepoint(mouse_pos)
         return self.hover
 
+    # Action on click
     def on_click(self, event):
         if self.hover_rect.collidepoint(event.pos):
             self.action()
+
+
+class Board(Element):
+    def __init__(self, x, y, image_path=None):
+        self.x = x
+        self.y = y
+        self.rect = pygame.rect.Rect(90, 90, 420, 420)
+        self.image = (
+            pygame.image.load(image_path).convert_alpha() if image_path else None
+        )
+
+    def draw(self, surface):
+        # Draw outliner
+        pygame.draw.rect(
+            surface, (110, 44, 0), self.rect.inflate(6, 6), border_radius=3
+        )
+
+        # Draw inside
+        if self.image:
+            surface.blit(self.image, self.rect)
+        else:
+            pygame.draw.rect(surface, (255, 255, 255), self.rect, border_radius=3)
+
+
+class Board_TTT(Board):
+    def __init__(self, x, y, image_path=None):
+        super().__init__(x, y, image_path)
+        self.hover_rect = self.rect.inflate(-5, -5)
+        self.init_board()
+        self.load_image()
+
+    # Reinitiate the board
+    def init_board(self):
+        self.board = [None] * 9
+        self.turn = 1
+        self.pause = False
+
+    # Load image for Tic Tac Toe
+    def load_image(self):
+        self.list_image = [
+            pygame.image.load("img/banana.png").convert_alpha(),
+            pygame.image.load("img/grape.png").convert_alpha(),
+        ]
+        self.list_result = [
+            pygame.image.load("img/banana_w.png").convert_alpha(),
+            pygame.image.load("img/draw.png").convert_alpha(),
+            pygame.image.load("img/grape_w.png").convert_alpha(),
+        ]
+
+    def draw(self, surface):
+        super().draw(surface)
+        self.draw_grid(surface)
+        self.draw_tic_tac_toe(surface)
+        self.draw_result(surface)
+
+    def draw_grid(self, surface):
+        pygame.draw.line(
+            surface, (0, 0, 0), (self.x + 140, self.y), (self.x + 140, self.y + 420), 5
+        )
+        pygame.draw.line(
+            surface, (0, 0, 0), (self.x + 280, self.y), (self.x + 280, self.y + 420), 5
+        )
+        pygame.draw.line(
+            surface, (0, 0, 0), (self.x, self.y + 280), (self.x + 420, self.y + 280), 5
+        )
+        pygame.draw.line(
+            surface, (0, 0, 0), (self.x, self.y + 140), (self.x + 420, self.y + 140), 5
+        )
+
+    def draw_tic_tac_toe(self, surface):
+        for i in range(9):
+            if self.board[i]:
+                surface.blit(
+                    self.list_image[(self.board[i] + 1) // 2],
+                    (self.x + 140 * (i % 3), self.y + 140 * (i // 3)),
+                )
+
+    def draw_result(self, surface):
+        if self.check_win() != None:
+            surface.blit(
+                self.list_result[self.check_win() + 1],
+                (630, 100),
+            )
+
+    def on_click(self, event):
+        if (not self.pause) and self.hover_rect.collidepoint(event.pos):
+            ind = self.mpos_to_ind(event.pos)
+            if not self.board[ind]:
+                self.board[ind] = self.turn
+                self.turn = -self.turn
+                if self.check_win():
+                    self.pause = True
+
+    def mpos_to_ind(self, m_pos):
+        x = m_pos[0] - self.x
+        y = m_pos[1] - self.y
+        return x // 140 + 3 * (y // 140)
+
+    def check_win(self):
+        winning_combinations = [
+            (0, 1, 2),  # Row 1
+            (3, 4, 5),  # Row 2
+            (6, 7, 8),  # Row 3
+            (0, 3, 6),  # Col 1
+            (1, 4, 7),  # Col 2
+            (2, 5, 8),  # Col 3
+            (0, 4, 8),  # Dia 1
+            (2, 4, 6),  # Dia 2
+        ]
+
+        for combo in winning_combinations:
+            a, b, c = combo
+            if (
+                self.board[a] == self.board[b] == self.board[c]
+                and self.board[a] is not None
+            ):
+                return self.board[a]
+
+        if all(cell is not None for cell in self.board):
+            return 0
+
+        return None
