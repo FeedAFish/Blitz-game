@@ -82,6 +82,15 @@ class Game:
                 action=self.main_menu,
             )
         )
+        self.load_list.append(
+            elements.Button(
+                x=700,
+                y=460,
+                image_path="./img/wooden_button.png",
+                text="Unpause",
+                action=self.load_list[0].to_pause,
+            )
+        )
 
     # Handle in-app events
     def handle_events(self):

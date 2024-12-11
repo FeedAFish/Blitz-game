@@ -114,6 +114,8 @@ class Board(Element):
 class Board_TTT(Board):
     def __init__(self, x, y, image_path=None):
         super().__init__(x, y, image_path)
+        self.mode = 0
+        self.player = 1
         self.hover_rect = self.rect.inflate(-5, -5)
         self.init_board()
         self.load_image()
@@ -177,6 +179,8 @@ class Board_TTT(Board):
             if not self.board[ind]:
                 self.board[ind] = self.turn
                 self.turn = -self.turn
+                if self.mode and self.turn != self.player:
+                    self.pause = True
                 if self.check_win():
                     self.pause = True
 
@@ -209,3 +213,6 @@ class Board_TTT(Board):
             return 0
 
         return None
+
+    def to_pause(self):
+        self.pause = not self.pause
