@@ -1,5 +1,6 @@
 import pygame
 import sys
+import pickle as pkl
 from utils import elements
 
 
@@ -67,7 +68,7 @@ class Game:
         self.load_list.append(
             elements.Button(
                 x=700,
-                y=300,
+                y=200,
                 image_path="./img/wooden_button.png",
                 text="Restart",
                 action=self.load_list[0].init_board,
@@ -76,7 +77,7 @@ class Game:
         self.load_list.append(
             elements.Button(
                 x=700,
-                y=380,
+                y=280,
                 image_path="./img/wooden_button.png",
                 text="Main Menu",
                 action=self.main_menu,
@@ -85,10 +86,20 @@ class Game:
         self.load_list.append(
             elements.Button(
                 x=700,
-                y=460,
+                y=360,
                 image_path="./img/wooden_button.png",
-                text="Unpause",
-                action=self.load_list[0].to_pause,
+                text="Switch player",
+                action=self.load_list[0].switch_player,
+            )
+        )
+
+        self.load_list.append(
+            elements.Button(
+                x=700,
+                y=440,
+                image_path="./img/wooden_button.png",
+                text="Switch mode",
+                action=self.load_list[0].switch_mode,
             )
         )
 

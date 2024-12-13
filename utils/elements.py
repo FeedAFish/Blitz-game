@@ -1,5 +1,6 @@
 import pygame
 import sys
+from utils import bots
 
 
 class Element:
@@ -114,16 +115,20 @@ class Board(Element):
 class Board_TTT(Board):
     def __init__(self, x, y, image_path=None):
         super().__init__(x, y, image_path)
-        self.mode = 0
-        self.player = 1
+        self.mode = 1
+        self.player = -1
         self.hover_rect = self.rect.inflate(-5, -5)
+        self.bot_rl = bots.TicTacToeBot.load("test_1.pkl")
         self.init_board()
         self.load_image()
 
     # Reinitiate the board
     def init_board(self):
+        self.pause = True
         self.board = [None] * 9
         self.turn = 1
+        if self.mode and self.player == -1:
+            self.bot_play()
         self.pause = False
 
     # Load image for Tic Tac Toe
@@ -170,7 +175,7 @@ class Board_TTT(Board):
         if self.check_win() != None:
             surface.blit(
                 self.list_result[self.check_win() + 1],
-                (630, 100),
+                (620, 50),
             )
 
     def on_click(self, event):
@@ -181,8 +186,16 @@ class Board_TTT(Board):
                 self.turn = -self.turn
                 if self.mode and self.turn != self.player:
                     self.pause = True
+                    if self.check_win() == None:
+                        self.bot_play()
+                        self.pause = False
+
                 if self.check_win():
                     self.pause = True
+
+    def bot_play(self):
+        self.board = self.bot_rl.play(self.board, -self.player)
+        self.turn = -self.turn
 
     def mpos_to_ind(self, m_pos):
         x = m_pos[0] - self.x
@@ -216,3 +229,10 @@ class Board_TTT(Board):
 
     def to_pause(self):
         self.pause = not self.pause
+
+    def switch_player(self):
+        self.player = -self.player
+        self.init_board()
+
+    def switch_mode(self):
+        self.mode = 1 - self.mode

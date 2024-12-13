@@ -1,11 +1,10 @@
-import numpy as np
 import random
 import pickle as pkl
 
 
 class TicTacToeBot:
     def __init__(
-        self, player=1, learning_rate=0.1, discount_factor=0.9, exploration_rate=1.0
+        self, player=1, learning_rate=0.2, discount_factor=0.9, exploration_rate=1.0
     ):
         # Initialize Q-table with zeros for all possible states and actions
         self.q_table = {}
@@ -15,8 +14,8 @@ class TicTacToeBot:
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
         self.exploration_rate = exploration_rate
-        self.exploration_decay = 0.995
-        self.min_exploration_rate = 0.01
+        self.exploration_decay = 0.999
+        self.min_exploration_rate = 0.001
 
     def get_state_hash(self, board):
         return tuple(board)
@@ -24,7 +23,10 @@ class TicTacToeBot:
     def get_moves(self, board):
         return [i for i in range(9) if not board[i]]
 
-    def choose_action(self, board):
+    def choose_action(
+        self,
+        board,
+    ):
         valid_moves = self.get_moves(board)
         # Exploration
         if random.random() < self.exploration_rate:
@@ -35,19 +37,30 @@ class TicTacToeBot:
         if state_key not in self.q_table:
             return random.choice(valid_moves)
 
+        if state_key == tuple([None] * 9):
+            return random.choice(valid_moves)
+
         return self.check_best(board, valid_moves)
 
     def check_best(self, board, valid_moves):
         next_board = board.copy()
         max_value = -100
+
         for move in valid_moves:
             next_board[move] = self.player
-            value = self.q_table.get(self.get_state_hash(next_board), 0) * self.player
+
+            if tuple(next_board) not in self.q_table:
+                value = 0
+            else:
+                value = self.q_table.get(tuple(next_board)) * self.player
+
             if value > max_value:
                 max_value = value
                 bests = [move]
             elif value == max_value:
                 bests.append(move)
+
+            next_board[move] = None
 
         return random.choice(bests)
 
