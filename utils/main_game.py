@@ -9,6 +9,7 @@ class Game:
         pygame.init()
         pygame.display.set_caption("Blitz Game")
         self.running = True
+        self.fps_base = False
         self.screen = pygame.display.set_mode((width, height))
         self.clock = pygame.time.Clock()
         self.main_bg = pygame.image.load(background_path).convert_alpha()
@@ -18,6 +19,8 @@ class Game:
     # Main Menu
     def main_menu(self):
         self.background = self.main_bg
+        self.fps = 60
+        self.fps_base = False
         self.load_list = []
         self.add_menu_buttons()
 
@@ -39,12 +42,15 @@ class Game:
     # Game choice menu
     def choice_menu(self):
         self.background = self.main_bg
+        self.fps = 60
+        self.fps_base = False
         self.load_list = []
         self.add_choice_buttons()
 
     def add_choice_buttons(self):
         menus = {
             "Tic-Tac-Toe": self.board_ttt,
+            "Snake": self.board_snake,
             "Back": self.main_menu,
         }
         y_pos = 300 - len(menus) * 55 + 55
@@ -60,9 +66,11 @@ class Game:
             )
             y_pos += 110
 
-    # Board
+    # Board_TTT
     def board_ttt(self):
         self.background = self.board
+        self.fps = 60
+        self.fps_base = False
         self.load_list = []
         self.load_list.append(elements.Board_TTT(90, 90))
         self.load_list.append(
@@ -103,6 +111,41 @@ class Game:
             )
         )
 
+    # Board Snake
+    def board_snake(self):
+        self.background = self.board
+        self.fps = 10
+        self.fps_base = True
+        self.load_list = []
+        self.load_list.append(elements.Board_Snake(90, 90))
+        self.load_list.append(
+            elements.Button(
+                x=700,
+                y=200,
+                image_path="./img/wooden_button.png",
+                text="Restart",
+                action=self.load_list[0].init_board,
+            )
+        )
+        self.load_list.append(
+            elements.Button(
+                x=700,
+                y=280,
+                image_path="./img/wooden_button.png",
+                text="Main Menu",
+                action=self.main_menu,
+            )
+        )
+        self.load_list.append(
+            elements.Button(
+                x=700,
+                y=360,
+                image_path="./img/wooden_button.png",
+                text="Pause",
+                action=self.load_list[0].pause_trig,
+            )
+        )
+
     # Handle in-app events
     def handle_events(self):
         """Handle pygame events"""
@@ -111,10 +154,8 @@ class Game:
                 self.running = False
                 self.exit()
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    for item in self.load_list:
-                        item.on_click(event)
+            for item in self.load_list:
+                item.on_click(event)
 
         m_pos = pygame.mouse.get_pos()
         for item in self.load_list:
@@ -131,7 +172,9 @@ class Game:
     def run(self):
         """Main game loop"""
         while self.running:
-            self.clock.tick(60)
+            if self.fps_base:
+                self.fps = self.load_list[0].get_speed()
+            self.clock.tick(self.fps)
             self.handle_events()
             self.draw()
 

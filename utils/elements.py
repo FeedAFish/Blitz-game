@@ -1,5 +1,6 @@
 import pygame
 import sys
+import random
 from utils import bots
 
 
@@ -86,8 +87,9 @@ class Button(Element):
 
     # Action on click
     def on_click(self, event):
-        if self.hover_rect.collidepoint(event.pos):
-            self.action()
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.hover_rect.collidepoint(event.pos):
+                self.action()
 
 
 class Board(Element):
@@ -179,19 +181,22 @@ class Board_TTT(Board):
             )
 
     def on_click(self, event):
-        if (not self.pause) and self.hover_rect.collidepoint(event.pos):
-            ind = self.mpos_to_ind(event.pos)
-            if not self.board[ind]:
-                self.board[ind] = self.turn
-                self.turn = -self.turn
-                if self.mode and self.turn != self.player:
-                    self.pause = True
-                    if self.check_win() == None:
-                        self.bot_play()
-                        self.pause = False
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if not self.pause and self.hover_rect.collidepoint(event.pos):
+                ind = self.mpos_to_ind(event.pos)
 
-                if self.check_win():
-                    self.pause = True
+                if not self.board[ind]:
+                    self.board[ind] = self.turn
+                    self.turn = -self.turn
+
+                    if self.mode and self.turn != self.player:
+                        self.pause = True
+                        if self.check_win() is None:
+                            self.bot_play()
+                            self.pause = False
+
+                    if self.check_win():
+                        self.pause = True
 
     def bot_play(self):
         self.board = self.bot_rl.play(self.board, -self.player)
@@ -236,3 +241,160 @@ class Board_TTT(Board):
 
     def switch_mode(self):
         self.mode = 1 - self.mode
+
+
+class Board_Snake(Board):
+    def __init__(self, x, y, image_path=None):
+        super().__init__(x, y, image_path)
+        self.load_color_and_font()
+        self.grid_size = 30
+        self.width = 420 / self.grid_size
+        self.height = 420 / self.grid_size
+        self.init_board()
+
+    def load_color_and_font(self):
+        self.font = pygame.font.Font("./font/LovelyKids-gxly4.ttf", 35)
+        self.s_color = (255, 0, 0)
+        self.f_color = (0, 255, 0)
+
+    def init_board(self):
+        self.pause = False
+        self.snake = [(5, 5)]
+        self.food = self.spawn_food()
+        self.direction = (1, 0)
+
+        # Prevent 2 times direction change
+        self.change_d = False
+
+        # Score and speed
+        self.score = 0
+        self.speed = 10
+
+    def spawn_food(self):
+        while True:
+            food_pos = (
+                random.randint(0, self.width - 1),
+                random.randint(0, self.height - 1),
+            )
+            if food_pos not in self.snake:
+                return food_pos
+
+    def draw(self, surface):
+        if not self.pause:
+            self.move()
+        super().draw(surface)
+        self.draw_snake(surface)
+        self.draw_food(surface)
+        self.draw_score(surface)
+
+    def move(self):
+        head = self.snake[0]
+        new_head = (
+            (head[0] + self.direction[0]) % self.width,
+            (head[1] + self.direction[1]) % self.height,
+        )
+
+        # Check for self-collision
+        if new_head in self.snake[1:]:
+            self.pause = True
+            return
+
+        self.snake.insert(0, new_head)
+
+        # Check if food is eaten
+        if new_head == self.food:
+            self.score += 1
+            self.food = self.spawn_food()
+
+            # Increase speed by 2%
+            self.speed *= 1.02
+        else:
+            # Remove tail if food not eaten
+            self.snake.pop()
+
+        # Allow direction change again
+        self.change_d = False
+
+    def draw_snake(self, surface):
+        # Draw head
+        pygame.draw.rect(
+            surface,
+            (0, 0, 0),
+            (
+                90 + self.snake[0][0] * self.grid_size,
+                90 + self.snake[0][1] * self.grid_size,
+                self.grid_size - 1,
+                self.grid_size - 1,
+            ),
+        )
+
+        # Draw body
+        for segment in self.snake[1:]:
+            pygame.draw.rect(
+                surface,
+                self.s_color,
+                (
+                    90 + segment[0] * self.grid_size,
+                    90 + segment[1] * self.grid_size,
+                    self.grid_size - 1,
+                    self.grid_size - 1,
+                ),
+            )
+
+    def draw_food(self, surface):
+        # Draw food
+        pygame.draw.rect(
+            surface,
+            self.f_color,
+            (
+                90 + self.food[0] * self.grid_size,
+                90 + self.food[1] * self.grid_size,
+                self.grid_size - 1,
+                self.grid_size - 1,
+            ),
+        )
+
+    def draw_score(self, surface):
+        text = self.font.render(f"Score: {self.score}", True, (0, 0, 0))
+        rect = text.get_rect()
+        rect.center = (700, 100)
+        surface.blit(text, rect)
+
+    def on_click(self, event):
+        if event.type == pygame.KEYDOWN:
+            # Prevent turning back on itself
+            if (
+                event.key == pygame.K_UP
+                and self.direction != (0, 1)
+                and not self.change_d
+            ):
+                self.direction = (0, -1)
+                self.change_d = True
+            elif (
+                event.key == pygame.K_DOWN
+                and self.direction != (0, -1)
+                and not self.change_d
+            ):
+                self.direction = (0, 1)
+                self.change_d = True
+            elif (
+                event.key == pygame.K_LEFT
+                and self.direction != (1, 0)
+                and not self.change_d
+            ):
+                self.direction = (-1, 0)
+                self.change_d = True
+            elif (
+                event.key == pygame.K_RIGHT
+                and self.direction != (-1, 0)
+                and not self.change_d
+            ):
+                self.direction = (1, 0)
+                self.change_d = True
+
+    def get_speed(self):
+        return self.speed
+
+    def pause_trig(self):
+        if not self.snake[0] in self.snake[1:]:
+            self.pause = not self.pause

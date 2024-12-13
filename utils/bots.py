@@ -14,7 +14,7 @@ class TicTacToeBot:
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
         self.exploration_rate = exploration_rate
-        self.exploration_decay = 0.999
+        self.exploration_decay = 0.9999
         self.min_exploration_rate = 0.001
 
     def get_state_hash(self, board):
@@ -122,11 +122,9 @@ class TicTacToeBot:
     def save(self, path="bot_ttt.pkl"):
         with open(path, "wb") as file:
             pkl.dump(self, file)
-        print("Saved")
 
     @staticmethod
     def load(path):
         with open(path, "rb") as file:
             instance = pkl.load(file)
-        print("Loaded")
         return instance
