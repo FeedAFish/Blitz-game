@@ -1,7 +1,7 @@
 import pygame
 import sys
-import pickle as pkl
 from utils import elements
+from utils import lines
 
 
 class Game:
@@ -51,6 +51,7 @@ class Game:
         menus = {
             "Tic-Tac-Toe": self.board_ttt,
             "Snake": self.board_snake,
+            "Lines 98": self.board_lines,
             "Back": self.main_menu,
         }
         y_pos = 300 - len(menus) * 55 + 55
@@ -143,6 +144,23 @@ class Game:
                 image_path="./img/wooden_button.png",
                 text="Pause",
                 action=self.load_list[0].pause_trig,
+            )
+        )
+
+    # Board Lines
+    def board_lines(self):
+        self.background = self.board
+        self.fps = 60
+        self.fps_base = False
+        self.load_list = []
+        self.load_list.append(lines.Lines98(90, 90))
+        self.load_list.append(
+            elements.Button(
+                x=700,
+                y=280,
+                image_path="./img/wooden_button.png",
+                text="Main Menu",
+                action=self.main_menu,
             )
         )
 

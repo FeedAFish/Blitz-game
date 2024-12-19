@@ -259,6 +259,7 @@ class Board_Snake(Board):
 
     def init_board(self):
         self.pause = False
+        self.end = False
         self.snake = [(5, 5)]
         self.food = self.spawn_food()
         self.direction = (1, 0)
@@ -268,7 +269,7 @@ class Board_Snake(Board):
 
         # Score and speed
         self.score = 0
-        self.speed = 10
+        self.speed = 6
 
     def spawn_food(self):
         while True:
@@ -297,6 +298,7 @@ class Board_Snake(Board):
         # Check for self-collision
         if new_head in self.snake[1:]:
             self.pause = True
+            self.end = True
             return
 
         self.snake.insert(0, new_head)
@@ -361,34 +363,23 @@ class Board_Snake(Board):
         surface.blit(text, rect)
 
     def on_click(self, event):
-        if event.type == pygame.KEYDOWN:
+        if (
+            event.type == pygame.KEYDOWN
+            and not self.pause
+            and not self.change_d
+            and not self.end
+        ):
             # Prevent turning back on itself
-            if (
-                event.key == pygame.K_UP
-                and self.direction != (0, 1)
-                and not self.change_d
-            ):
+            if event.key == pygame.K_UP and self.direction != (0, 1):
                 self.direction = (0, -1)
                 self.change_d = True
-            elif (
-                event.key == pygame.K_DOWN
-                and self.direction != (0, -1)
-                and not self.change_d
-            ):
+            elif event.key == pygame.K_DOWN and self.direction != (0, -1):
                 self.direction = (0, 1)
                 self.change_d = True
-            elif (
-                event.key == pygame.K_LEFT
-                and self.direction != (1, 0)
-                and not self.change_d
-            ):
+            elif event.key == pygame.K_LEFT and self.direction != (1, 0):
                 self.direction = (-1, 0)
                 self.change_d = True
-            elif (
-                event.key == pygame.K_RIGHT
-                and self.direction != (-1, 0)
-                and not self.change_d
-            ):
+            elif event.key == pygame.K_RIGHT and self.direction != (-1, 0):
                 self.direction = (1, 0)
                 self.change_d = True
 
