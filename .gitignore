@@ -176,8 +176,4 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/python
 
 test*
-img/
-font/
-bot/
-output*
-sound/
+data/

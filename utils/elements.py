@@ -25,7 +25,7 @@ class Button(Element):
         y,
         image_path=None,
         text="",
-        font_path="./font/LovelyKids-gxly4.ttf",
+        font_path="./data/font/LovelyKids-gxly4.ttf",
         action=None,
     ):
         # Load the image and font
@@ -122,15 +122,15 @@ class Board(Element):
 class Board_TTT(Board):
     def __init__(self, x, y, image_path=None):
         super().__init__(x, y, image_path)
+        self.hover_rect = self.rect.inflate(-5, -5)
         self.mode = 1
         self.player = -1
         try:
-            self.bot_rl = bots.TicTacToeBot.load("test_1.pkl")
+            self.bot_rl = bots.TicTacToeBot.load("data/bot/test_1.pkl")
         except FileNotFoundError:
             print("Bot file not found. Please ensure 'test_1.pkl' exists.")
             pygame.quit()
             sys.exit()
-        self.bot_rl = bots.TicTacToeBot.load("test_1.pkl")
         self.init_board()
         self.load_image()
 
@@ -139,6 +139,9 @@ class Board_TTT(Board):
         self.pause = True
         self.board = [None] * 9
         self.turn = 1
+        if self.mode and self.player == -1:
+            self.bot_play()
+        self.pause = False
 
     def load_image(self):  # Load images for game
         def load_image_with_default(path, default_color=(255, 255, 255)):
@@ -152,18 +155,18 @@ class Board_TTT(Board):
 
         # Load images for game
         self.list_image = [
-            load_image_with_default("img/banana.png"),
-            load_image_with_default("img/grape.png"),
+            load_image_with_default("data/img/banana.png"),
+            load_image_with_default("data/img/grape.png"),
         ]
         self.list_result = [
-            load_image_with_default("img/banana_w.png"),
-            load_image_with_default("img/draw.png"),
-            load_image_with_default("img/grape_w.png"),
+            load_image_with_default("data/img/banana_w.png"),
+            load_image_with_default("data/img/draw.png"),
+            load_image_with_default("data/img/grape_w.png"),
         ]
         self.list_result = [
-            pygame.image.load("img/banana_w.png").convert_alpha(),
-            pygame.image.load("img/draw.png").convert_alpha(),
-            pygame.image.load("img/grape_w.png").convert_alpha(),
+            pygame.image.load("data/img/banana_w.png").convert_alpha(),
+            pygame.image.load("data/img/draw.png").convert_alpha(),
+            pygame.image.load("data/img/grape_w.png").convert_alpha(),
         ]
 
     # Draw board
@@ -187,13 +190,13 @@ class Board_TTT(Board):
             surface, (0, 0, 0), (self.x, self.y + 140), (self.x + 420, self.y + 140), 5
         )
 
-    def draw_result(self, surface):  # Draw elements inside the board (X, O for players)
-        result = self.check_win()
-        if result is not None:
-            surface.blit(
-                self.list_result[result + 1],
-                (620, 50),
-            )
+    def draw_tic_tac_toe(self, surface):  # Draw tic-tac-toe on board
+        for i in range(9):
+            if self.board[i]:
+                surface.blit(
+                    self.list_image[(self.board[i] + 1) // 2],
+                    (self.x + 140 * (i % 3), self.y + 140 * (i // 3)),
+                )
 
     def draw_result(self, surface):  # Show result if match is finished
         if self.check_win() != None:
@@ -269,6 +272,7 @@ class Board_TTT(Board):
 
     def switch_mode(self):
         self.mode = 1 - self.mode
+        self.init_board()
 
 
 class Board_Snake(Board):
@@ -281,7 +285,7 @@ class Board_Snake(Board):
         self.init_board()
 
     def load_color_and_font(self):  # Load font and set color for game
-        self.font = pygame.font.Font("./font/LovelyKids-gxly4.ttf", 35)
+        self.font = pygame.font.Font("./data/font/LovelyKids-gxly4.ttf", 35)
         self.s_color = (255, 0, 0)
         self.f_color = (0, 255, 0)
 
@@ -446,13 +450,13 @@ class Lines98(Board):
         )
 
     def load_sound(self):  # Load sound for Lines98
-        self.error_sound = pygame.mixer.Sound("sound/error.mp3")
-        self.point_sound = pygame.mixer.Sound("sound/point.mp3")
-        self.loss_sound = pygame.mixer.Sound("sound/loss.mp3")
+        self.error_sound = pygame.mixer.Sound("data/sound/error.mp3")
+        self.point_sound = pygame.mixer.Sound("data/sound/point.mp3")
+        self.loss_sound = pygame.mixer.Sound("data/sound/loss.mp3")
 
     def load_image_and_font(self):  # Load image for Lines98
-        self.font = pygame.font.Font("./font/LovelyKids-gxly4.ttf", 35)
-        list_file = [f"img/star {i+1}.png" for i in range(8)]
+        self.font = pygame.font.Font("./data/font/LovelyKids-gxly4.ttf", 35)
+        list_file = [f"data/img/star {i+1}.png" for i in range(8)]
         self.list_image = [
             pygame.transform.scale(
                 pygame.image.load(file).convert_alpha(),
@@ -477,7 +481,7 @@ class Lines98(Board):
         start_list = random.sample(self.get_available_grid(), 4)
         for i in range(4):
             self.board[start_list[i]] = random.randint(1, 8)
-        self.next_balls = random.sample(self.get_available_grid(), 3)
+        self.next_stars = random.sample(self.get_available_grid(), 3)
 
         self.next_colors = [random.randint(1, 8) for _ in range(3)]
         self.score = 0
@@ -530,9 +534,9 @@ class Lines98(Board):
             )
 
     def draw_elements(self, surface):  # Draw elements inside the board
-        for i in self.next_balls:
+        for i in self.next_stars:  # Draw next stars
             surface.blit(
-                self.list_small[self.next_colors[self.next_balls.index(i)] - 1],
+                self.list_small[self.next_colors[self.next_stars.index(i)] - 1],
                 (
                     self.x
                     + (420 - self.width) // 2
@@ -547,7 +551,7 @@ class Lines98(Board):
                 ),
             )
 
-        for i in range(self.board_size**2):
+        for i in range(self.board_size**2):  # Draw stars
             if self.board[i]:
                 if i == self.clicked:
                     rotated_image = pygame.transform.rotate(
@@ -617,7 +621,7 @@ class Lines98(Board):
                         current = self.score
                         self.get_point()
                         if current == self.score:
-                            self.add_next_balls()
+                            self.add_next_stars()
                             self.get_point()
                         if current != self.score:
                             pygame.mixer.Sound.play(self.point_sound)
@@ -710,24 +714,24 @@ class Lines98(Board):
             to_clear_indices.update(self.find_consecutive(diag, diag_indices))
         self.clear_line(to_clear_indices)
 
-    def add_next_balls(self):  # Add next balls to the board
-        for i in range(len(self.next_balls)):
-            if self.board[self.next_balls[i]] is None:
-                self.board[self.next_balls[i]] = self.next_colors[i]
+    def add_next_stars(self):  # Add next balls to the board
+        for i in range(len(self.next_stars)):
+            if self.board[self.next_stars[i]] is None:
+                self.board[self.next_stars[i]] = self.next_colors[i]
             else:
                 self.board[random.choice(self.get_available_grid())] = self.next_colors[
                     i
                 ]
-        recent = self.next_balls
+        recent = self.next_stars
         if self.get_available_grid():
-            self.next_balls = random.sample(
+            self.next_stars = random.sample(
                 self.get_available_grid(), min(3, len(self.get_available_grid()))
             )
         else:  # Game over if no place available
             pygame.mixer.Sound.play(self.loss_sound)
             self.pause = True
 
-        self.next_colors = [random.randint(1, 8) for _ in range(len(self.next_balls))]
+        self.next_colors = [random.randint(1, 8) for _ in range(len(self.next_stars))]
 
     def clear_line(self, indices):  # Clear by indices
         for i, j in indices:
