@@ -436,7 +436,6 @@ class Lines98(Board):
         super().__init__(x, y, image_path)
         self.grid_size = 40
         self.sizing_board()
-
         # Load sound and images
         self.load_sound()
         self.load_image_and_font()
@@ -455,18 +454,27 @@ class Lines98(Board):
         self.loss_sound = pygame.mixer.Sound("data/sound/loss.mp3")
 
     def load_image_and_font(self):  # Load image for Lines98
+        def load_image_with_default(path, default_color=(0, 0, 0)):
+            try:
+                return pygame.image.load(path).convert_alpha()
+            except pygame.error:
+                # Create a default surface if image is not found
+                surface = pygame.Surface((self.grid_size - 10, self.grid_size - 10))
+                surface.fill(default_color)
+                return surface
+
         self.font = pygame.font.Font("./data/font/LovelyKids-gxly4.ttf", 35)
         list_file = [f"data/img/star {i+1}.png" for i in range(8)]
         self.list_image = [
             pygame.transform.scale(
-                pygame.image.load(file).convert_alpha(),
+                load_image_with_default(file),
                 (self.grid_size - 10, self.grid_size - 10),
             )
             for file in list_file
         ]
         self.list_small = [
             pygame.transform.scale(
-                pygame.image.load(file).convert_alpha(),
+                load_image_with_default(file),
                 ((self.grid_size - 10) // 2, (self.grid_size - 10) // 2),
             )
             for file in list_file
@@ -477,12 +485,10 @@ class Lines98(Board):
         self.board = [None] * self.board_size**2
         self.clicked = None
         self.angle = 0
-
         start_list = random.sample(self.get_available_grid(), 4)
         for i in range(4):
             self.board[start_list[i]] = random.randint(1, 8)
-        self.next_stars = random.sample(self.get_available_grid(), 3)
-
+        self.next_balls = random.sample(self.get_available_grid(), 3)
         self.next_colors = [random.randint(1, 8) for _ in range(3)]
         self.score = 0
         self.pause = False
@@ -534,9 +540,9 @@ class Lines98(Board):
             )
 
     def draw_elements(self, surface):  # Draw elements inside the board
-        for i in self.next_stars:  # Draw next stars
+        for i in self.next_balls:
             surface.blit(
-                self.list_small[self.next_colors[self.next_stars.index(i)] - 1],
+                self.list_small[self.next_colors[self.next_balls.index(i)] - 1],
                 (
                     self.x
                     + (420 - self.width) // 2
@@ -550,8 +556,7 @@ class Lines98(Board):
                     + 5,
                 ),
             )
-
-        for i in range(self.board_size**2):  # Draw stars
+        for i in range(self.board_size**2):
             if self.board[i]:
                 if i == self.clicked:
                     rotated_image = pygame.transform.rotate(
@@ -605,7 +610,6 @@ class Lines98(Board):
         ):  # Left click
             if self.hover_rect.collidepoint(event.pos):
                 ind_clicked = self.mpos_to_ind(event.pos)
-
                 if self.board[ind_clicked]:
                     if self.clicked != ind_clicked:  # The star is now clicked
                         self.clicked = ind_clicked
@@ -621,7 +625,7 @@ class Lines98(Board):
                         current = self.score
                         self.get_point()
                         if current == self.score:
-                            self.add_next_stars()
+                            self.add_next_balls()
                             self.get_point()
                         if current != self.score:
                             pygame.mixer.Sound.play(self.point_sound)
@@ -687,19 +691,16 @@ class Lines98(Board):
         self,
     ):  # Calculate total of stars that create at least 5 consecutive stars
         to_clear_indices = set()
-
         # Check rows
         for i in range(self.board_size):
             row = self.board[i * self.board_size : (i + 1) * self.board_size]
             row_indices = [(i, j) for j in range(self.board_size)]
             to_clear_indices.update(self.find_consecutive(row, row_indices))
-
         # Check columns
         for j in range(self.board_size):
             col = [self.board[i * self.board_size + j] for i in range(self.board_size)]
             col_indices = [(i, j) for i in range(self.board_size)]
             to_clear_indices.update(self.find_consecutive(col, col_indices))
-
         # Check diagonals (top-left to bottom-right)
         for start in range(
             -self.board_size + 1, self.board_size
@@ -714,24 +715,23 @@ class Lines98(Board):
             to_clear_indices.update(self.find_consecutive(diag, diag_indices))
         self.clear_line(to_clear_indices)
 
-    def add_next_stars(self):  # Add next balls to the board
-        for i in range(len(self.next_stars)):
-            if self.board[self.next_stars[i]] is None:
-                self.board[self.next_stars[i]] = self.next_colors[i]
+    def add_next_balls(self):  # Add next balls to the board
+        for i in range(len(self.next_balls)):
+            if self.board[self.next_balls[i]] is None:
+                self.board[self.next_balls[i]] = self.next_colors[i]
             else:
                 self.board[random.choice(self.get_available_grid())] = self.next_colors[
                     i
                 ]
-        recent = self.next_stars
+        recent = self.next_balls
         if self.get_available_grid():
-            self.next_stars = random.sample(
+            self.next_balls = random.sample(
                 self.get_available_grid(), min(3, len(self.get_available_grid()))
             )
         else:  # Game over if no place available
             pygame.mixer.Sound.play(self.loss_sound)
             self.pause = True
-
-        self.next_colors = [random.randint(1, 8) for _ in range(len(self.next_stars))]
+        self.next_colors = [random.randint(1, 8) for _ in range(len(self.next_balls))]
 
     def clear_line(self, indices):  # Clear by indices
         for i, j in indices:

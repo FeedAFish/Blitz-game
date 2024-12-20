@@ -157,7 +157,7 @@ class Game:
             elements.Button(
                 x=700,
                 y=280,
-                image_path=".data/img/wooden_button.png",
+                image_path="./data/img/wooden_button.png",
                 text="Restart",
                 action=self.load_list[0].init_board,
             )
@@ -166,19 +166,18 @@ class Game:
             elements.Button(
                 x=700,
                 y=360,
-                image_path=".data/img/wooden_button.png",
-                text=f"Size: {self.load_list[0].grid_size}",
-                action=self.load_list[0].grid_change,
+                image_path="./data/img/wooden_button.png",
+                text="Main Menu",
+                action=self.main_menu,
             )
         )
-
         self.load_list.append(
             elements.Button(
                 x=700,
                 y=440,
-                image_path=".data/img/wooden_button.png",
-                text="Main Menu",
-                action=self.main_menu,
+                image_path="./data/img/wooden_button.png",
+                text=f"Grid size: {self.load_list[0].grid_size}",
+                action=self.load_list[0].grid_change,
             )
         )
 
