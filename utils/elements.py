@@ -435,6 +435,7 @@ class Lines98(Board):
     def __init__(self, x, y, image_path=None):
         super().__init__(x, y, image_path)
         self.grid_size = 40
+        self.silent = False
         self.sizing_board()
         # Load sound and images
         self.load_sound()
@@ -452,6 +453,15 @@ class Lines98(Board):
         self.error_sound = pygame.mixer.Sound("data/sound/error.mp3")
         self.point_sound = pygame.mixer.Sound("data/sound/point.mp3")
         self.loss_sound = pygame.mixer.Sound("data/sound/loss.mp3")
+        self.move_sound = pygame.mixer.Sound("data/sound/move.mp3")
+        self.set_sound()
+
+    def set_sound(self):  # Set sound volume
+        value = 0.5 if not self.silent else 0
+        self.error_sound.set_volume(value)
+        self.point_sound.set_volume(value)
+        self.loss_sound.set_volume(value)
+        self.move_sound.set_volume(value)
 
     def load_image_and_font(self):  # Load image for Lines98
         def load_image_with_default(path, default_color=(0, 0, 0)):
@@ -464,7 +474,7 @@ class Lines98(Board):
                 return surface
 
         self.font = pygame.font.Font("./data/font/LovelyKids-gxly4.ttf", 35)
-        list_file = [f"data/img/star {i+1}.png" for i in range(8)]
+        list_file = [f"data/img/star {i+1}.png" for i in range(7)]
         self.list_image = [
             pygame.transform.scale(
                 load_image_with_default(file),
@@ -480,6 +490,10 @@ class Lines98(Board):
             for file in list_file
         ]
 
+    def change_sound(self):  # Change sound volume
+        self.silent = not self.silent
+        self.set_sound()
+
     # Reinitiate the board
     def init_board(self):
         self.board = [None] * self.board_size**2
@@ -487,9 +501,9 @@ class Lines98(Board):
         self.angle = 0
         start_list = random.sample(self.get_available_grid(), 4)
         for i in range(4):
-            self.board[start_list[i]] = random.randint(1, 8)
+            self.board[start_list[i]] = random.randint(1, 7)
         self.next_balls = random.sample(self.get_available_grid(), 3)
-        self.next_colors = [random.randint(1, 8) for _ in range(3)]
+        self.next_colors = [random.randint(1, 7) for _ in range(3)]
         self.score = 0
         self.pause = False
 
@@ -629,6 +643,8 @@ class Lines98(Board):
                             self.get_point()
                         if current != self.score:
                             pygame.mixer.Sound.play(self.point_sound)
+                        else:
+                            pygame.mixer.Sound.play(self.move_sound)
                     else:
                         pygame.mixer.Sound.play(self.error_sound)
 
@@ -731,7 +747,7 @@ class Lines98(Board):
         else:  # Game over if no place available
             pygame.mixer.Sound.play(self.loss_sound)
             self.pause = True
-        self.next_colors = [random.randint(1, 8) for _ in range(len(self.next_balls))]
+        self.next_colors = [random.randint(1, 7) for _ in range(len(self.next_balls))]
 
     def clear_line(self, indices):  # Clear by indices
         for i, j in indices:

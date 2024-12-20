@@ -176,8 +176,18 @@ class Game:
                 x=700,
                 y=440,
                 image_path="./data/img/wooden_button.png",
-                text=f"Grid size: {self.load_list[0].grid_size}",
+                text=f"Change size",
                 action=self.load_list[0].grid_change,
+            )
+        )
+
+        self.load_list.append(
+            elements.Button(
+                x=700,
+                y=520,
+                image_path="./data/img/wooden_button.png",
+                text=f"Mute",
+                action=self.load_list[0].change_sound,
             )
         )
 
