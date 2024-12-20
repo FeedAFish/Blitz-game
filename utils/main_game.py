@@ -1,7 +1,6 @@
 import pygame
 import sys
 from utils import elements
-from utils import lines
 
 
 class Game:
@@ -153,11 +152,30 @@ class Game:
         self.fps = 60
         self.fps_base = False
         self.load_list = []
-        self.load_list.append(lines.Lines98(90, 90))
+        self.load_list.append(elements.Lines98(90, 90))
         self.load_list.append(
             elements.Button(
                 x=700,
                 y=280,
+                image_path="./img/wooden_button.png",
+                text="Restart",
+                action=self.load_list[0].init_board,
+            )
+        )
+        self.load_list.append(
+            elements.Button(
+                x=700,
+                y=360,
+                image_path="./img/wooden_button.png",
+                text=f"Size: {self.load_list[0].grid_size}",
+                action=self.load_list[0].grid_change,
+            )
+        )
+
+        self.load_list.append(
+            elements.Button(
+                x=700,
+                y=440,
                 image_path="./img/wooden_button.png",
                 text="Main Menu",
                 action=self.main_menu,
