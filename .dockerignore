@@ -178,3 +178,4 @@ pyrightconfig.json
 test*
 *.exe
 *.git
+data/
