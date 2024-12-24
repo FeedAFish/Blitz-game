@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Configure display and audio
 ENV DISPLAY=host.docker.internal:0
-ENV SDL_AUDIODRIVER=alsa
+ENV SDL_AUDIODRIVER=dummy
 ENV PULSE_SERVER=host.docker.internal
 
 CMD ["python", "main.py"]
