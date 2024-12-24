@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     libasound2 \
     libasound2-plugins \
     pulseaudio \
+    tk \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure ALSA settings
