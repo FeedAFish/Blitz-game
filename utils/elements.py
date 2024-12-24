@@ -499,10 +499,14 @@ class Lines98(Board):
         self.board = [None] * self.board_size**2
         self.clicked = None
         self.angle = 0
+        self.angle_destroy = 0
+        self.to_clear = set()
+
         start_list = random.sample(self.get_available_grid(), 4)
         for i in range(4):
             self.board[start_list[i]] = random.randint(1, 7)
         self.next_balls = random.sample(self.get_available_grid(), 3)
+
         self.next_colors = [random.randint(1, 7) for _ in range(3)]
         self.score = 0
         self.pause = False
@@ -524,7 +528,8 @@ class Lines98(Board):
         self.draw_result(surface)
 
     def draw_grid(self, surface):  # Draw grid for the board
-        for i in range(self.board_size + 1):
+        # Draw outliner of the board
+        for i in range(self.board_size + 1):  # Draw grid lines vertically
             pygame.draw.line(
                 surface,
                 (128, 128, 128),
@@ -538,7 +543,7 @@ class Lines98(Board):
                 ),
                 3,
             )
-        for i in range(self.board_size + 1):
+        for i in range(self.board_size + 1):  # Draw grid lines horizontally
             pygame.draw.line(
                 surface,
                 (128, 128, 128),
@@ -555,56 +560,93 @@ class Lines98(Board):
 
     def draw_elements(self, surface):  # Draw elements inside the board
         for i in self.next_balls:
-            surface.blit(
-                self.list_small[self.next_colors[self.next_balls.index(i)] - 1],
-                (
-                    self.x
-                    + (420 - self.width) // 2
-                    + (i % self.board_size) * self.grid_size
-                    + (self.grid_size - 10) // 4
-                    + 5,
-                    self.y
-                    + (420 - self.width) // 2
-                    + (i // self.board_size) * self.grid_size
-                    + (self.grid_size - 10) // 4
-                    + 5,
-                ),
-            )
+            self.draw_next_star(surface, i)
+        if self.angle_destroy >= 90:
+            for i in self.to_clear:
+                self.board[i] = None
+            self.to_clear = set()
+            self.angle_destroy = 0
+            self.pause = False
+
         for i in range(self.board_size**2):
             if self.board[i]:
                 if i == self.clicked:
-                    rotated_image = pygame.transform.rotate(
-                        self.list_image[self.board[i] - 1], self.angle
-                    )
-                    surface.blit(
-                        rotated_image,
-                        (
-                            self.x
-                            + (420 - self.width) // 2
-                            + (i % self.board_size) * self.grid_size
-                            + 5,
-                            self.y
-                            + (420 - self.width) // 2
-                            + (i // self.board_size) * self.grid_size
-                            + 5,
-                        ),
-                    )
+                    self.draw_clicked(surface, i)
+                elif i in self.to_clear:
+                    self.draw_destroying(surface, i)
                 else:
-                    surface.blit(
-                        self.list_image[self.board[i] - 1],
-                        (
-                            self.x
-                            + (420 - self.width) // 2
-                            + (i % self.board_size) * self.grid_size
-                            + 5,
-                            self.y
-                            + (420 - self.width) // 2
-                            + (i // self.board_size) * self.grid_size
-                            + 5,
-                        ),
-                    )
+                    self.draw_normal(surface, i)
 
-    def draw_result(self, surface):  # Show result
+    def draw_next_star(self, surface, i):  # Draw next stars
+        surface.blit(
+            self.list_small[self.next_colors[self.next_balls.index(i)] - 1],
+            (
+                self.x
+                + (420 - self.width) // 2
+                + (i % self.board_size) * self.grid_size
+                + (self.grid_size - 10) // 4
+                + 5,
+                self.y
+                + (420 - self.width) // 2
+                + (i // self.board_size) * self.grid_size
+                + (self.grid_size - 10) // 4
+                + 5,
+            ),
+        )
+
+    def draw_normal(self, surface, i):  # Draw normal stars
+        surface.blit(
+            self.list_image[self.board[i] - 1],
+            (
+                self.x
+                + (420 - self.width) // 2
+                + (i % self.board_size) * self.grid_size
+                + 5,
+                self.y
+                + (420 - self.width) // 2
+                + (i // self.board_size) * self.grid_size
+                + 5,
+            ),
+        )
+
+    def draw_clicked(self, surface, i):  # Draw clicked stars
+        rotated_image = pygame.transform.rotate(
+            self.list_image[self.board[i] - 1], self.angle
+        )
+        surface.blit(
+            rotated_image,
+            (
+                self.x
+                + (420 - self.width) // 2
+                + (i % self.board_size) * self.grid_size
+                + 5,
+                self.y
+                + (420 - self.width) // 2
+                + (i // self.board_size) * self.grid_size
+                + 5,
+            ),
+        )
+
+    def draw_destroying(self, surface, i):  # Draw destroying stars
+        rotated_image = pygame.transform.rotate(
+            self.list_image[self.board[i] - 1], self.angle_destroy
+        )
+        self.angle_destroy += 2
+        surface.blit(
+            rotated_image,
+            (
+                self.x
+                + (420 - self.width) // 2
+                + (i % self.board_size) * self.grid_size
+                + 5,
+                self.y
+                + (420 - self.width) // 2
+                + (i // self.board_size) * self.grid_size
+                + 5,
+            ),
+        )
+
+    def draw_result(self, surface):  # Show result (Score and Game Over)
         text = self.font.render(f"Score: {self.score}", True, (0, 0, 0))
         rect = text.get_rect()
         rect.center = (700, 100)
@@ -624,6 +666,7 @@ class Lines98(Board):
         ):  # Left click
             if self.hover_rect.collidepoint(event.pos):
                 ind_clicked = self.mpos_to_ind(event.pos)
+
                 if self.board[ind_clicked]:
                     if self.clicked != ind_clicked:  # The star is now clicked
                         self.clicked = ind_clicked
@@ -641,10 +684,11 @@ class Lines98(Board):
                         if current == self.score:
                             self.add_next_balls()
                             self.get_point()
-                        if current != self.score:
-                            pygame.mixer.Sound.play(self.point_sound)
-                        else:
                             pygame.mixer.Sound.play(self.move_sound)
+                        if current != self.score:
+                            self.pause = True
+                            self.angle_destroy = 0
+                            pygame.mixer.Sound.play(self.point_sound)
                     else:
                         pygame.mixer.Sound.play(self.error_sound)
 
@@ -707,16 +751,19 @@ class Lines98(Board):
         self,
     ):  # Calculate total of stars that create at least 5 consecutive stars
         to_clear_indices = set()
+
         # Check rows
         for i in range(self.board_size):
             row = self.board[i * self.board_size : (i + 1) * self.board_size]
             row_indices = [(i, j) for j in range(self.board_size)]
             to_clear_indices.update(self.find_consecutive(row, row_indices))
+
         # Check columns
         for j in range(self.board_size):
             col = [self.board[i * self.board_size + j] for i in range(self.board_size)]
             col_indices = [(i, j) for i in range(self.board_size)]
             to_clear_indices.update(self.find_consecutive(col, col_indices))
+
         # Check diagonals (top-left to bottom-right)
         for start in range(
             -self.board_size + 1, self.board_size
@@ -729,7 +776,7 @@ class Lines98(Board):
                     diag.append(self.board[i * self.board_size + j])
                     diag_indices.append((i, j))
             to_clear_indices.update(self.find_consecutive(diag, diag_indices))
-        self.clear_line(to_clear_indices)
+        self.to_clear = {i * self.board_size + j for i, j in to_clear_indices}
 
     def add_next_balls(self):  # Add next balls to the board
         for i in range(len(self.next_balls)):
@@ -747,6 +794,7 @@ class Lines98(Board):
         else:  # Game over if no place available
             pygame.mixer.Sound.play(self.loss_sound)
             self.pause = True
+
         self.next_colors = [random.randint(1, 7) for _ in range(len(self.next_balls))]
 
     def clear_line(self, indices):  # Clear by indices
