@@ -39,7 +39,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest
-        
+
     - name: Start virtual display
       run: |
         Xvfb :99 -screen 0 1024x768x24 &
@@ -56,4 +56,3 @@ jobs:
     env:
       SDL_VIDEODRIVER: dummy
       SDL_AUDIODRIVER: dummy
-      DISPLAY: dummy
