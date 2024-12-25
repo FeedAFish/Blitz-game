@@ -228,4 +228,3 @@ class Game:
 
     def exit(self):
         pygame.quit()
-        sys.exit()

@@ -41,16 +41,16 @@ class Download_UI:
             try:
                 self.download_data(version, url)
                 self.root.after(1000, self.create_popup_message, "Data is up to date !")
-                self.root.after(
-                    2000, self.root.destroy
-                )  # Close the window after 2 seconds
+                # Close the window after 2 seconds
             except Exception as e:
                 self.root.after(
                     1000, self.create_popup_message, f"Error downloading data !"
                 )
                 with open("error.log", "w") as f:
                     f.writelines(str(e))
-                self.root.after(2000, self.root.destroy)
+        else:
+            self.root.after(1000, self.create_popup_message, "Data is up to date !")
+        self.root.after(2000, self.root.destroy)
 
     def create_popup_message(self, message):
         self.label.config(text=message)
