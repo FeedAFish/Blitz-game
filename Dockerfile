@@ -1,32 +1,32 @@
-FROM python:3.10.8-slim-buster
+FROM mcr.microsoft.com/windows/servercore:ltsc2019
 
-# Install system dependencies including ALSA
-RUN apt-get update && apt-get install -y \
-    python3-pygame \
-    libsdl2-2.0-0 \
-    libsdl2-mixer-2.0-0 \
-    libsdl2-image-2.0-0 \
-    libsdl2-ttf-2.0-0 \
-    x11-xserver-utils \
-    libasound2 \
-    libasound2-plugins \
-    pulseaudio \
-    tk \
-    && rm -rf /var/lib/apt/lists/*
+# Install Chocolatey
+RUN powershell -Command \
+    Set-ExecutionPolicy Bypass -Scope Process -Force; \
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; \
+    iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
-# Configure ALSA settings
-RUN mkdir -p /etc/alsa && \
-    echo "pcm.!default { type null }" > /etc/asound.conf
+# Install Python and dependencies
+RUN choco install -y python3 --version=3.10.8 && \
+    choco install -y vcredist140 && \
+    refreshenv
 
-WORKDIR /app
+# Add Python to PATH
+RUN setx /M PATH "%PATH%;C:\Python310;C:\Python310\Scripts"
 
+# Set working directory
+WORKDIR C:/app
+
+# Copy application files
 COPY . .
 
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Configure display and audio
-ENV DISPLAY=host.docker.internal:0
+# Configure environment
+ENV PYTHONUNBUFFERED=1
+ENV SDL_VIDEODRIVER=dummy
 ENV SDL_AUDIODRIVER=dummy
-ENV PULSE_SERVER=host.docker.internal
 
+# Set the entry point
 CMD ["python", "main.py"]
