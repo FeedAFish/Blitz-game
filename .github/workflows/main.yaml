@@ -31,11 +31,9 @@ jobs:
     - name: Run tests
       run: |
         pytest
-
+        
     - name: Build the Docker image
-      run: |
-      current=$(date +%s)
-      docker build . --file Dockerfile --tag blitz-game:$current
+      run: current=$(date +%s) && docker build . --file Dockerfile --tag blitz-game:$current
 
     env:
       SDL_VIDEODRIVER: dummy
