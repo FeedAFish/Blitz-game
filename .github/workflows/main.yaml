@@ -18,7 +18,7 @@ jobs:
     
     - name: Test Docker container
       run: |
-        xvfb-run docker run --rm blitz-game:$current python -c "import pygame; print('Pygame installed successfully')"
+        docker run --rm blitz-game:$current python -c "import pygame; print('Pygame installed successfully')"
 
     env:
       SDL_VIDEODRIVER: dummy
