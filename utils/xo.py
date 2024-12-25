@@ -121,8 +121,8 @@ class GameXO(elements.Board):
             if self.hover_rect.collidepoint(event.pos):
                 x, y = self.mpos_to_ind(event.pos)
                 if self.board[x + y * self.board_size] is None:
-                    self.board[x + y * self.board_size] = self.player
-                    self.player = -self.player
+                    self.board[x + y * self.board_size] = self.turn
+                    self.turn = -self.turn
                     if self.check_win():
                         self.pause = True
 
@@ -165,4 +165,18 @@ class GameXO(elements.Board):
                     diag_indices.append((i, j))
             if self.find_consecutive(diag, diag_indices):
                 return self.find_consecutive(diag, diag_indices)
-        return
+
+        for start in range(
+            -self.board_size + 1, self.board_size
+        ):  # Check anti-diagonal
+            diag = []
+            diag_indices = []
+            for i in range(self.board_size):
+                j = start - i
+                if 0 <= i < self.board_size and 0 <= j < self.board_size:
+                    diag.append(self.board[i * self.board_size + j])
+                    diag_indices.append((i, j))
+            if self.find_consecutive(diag, diag_indices):
+                return self.find_consecutive(diag, diag_indices)
+
+        return None
