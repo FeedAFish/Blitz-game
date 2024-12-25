@@ -13,6 +13,7 @@ data_dl.Download_UI(
 try:
     game = main_game.Game(800, 600)
     game.run()
+    game.exit()
 except Exception as e:
     print(e)
     with open("error.log", "w") as f:

@@ -197,14 +197,14 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-                self.exit()
 
             for item in self.load_list:
                 item.on_click(event)
 
-        m_pos = pygame.mouse.get_pos()
-        for item in self.load_list:
-            item.is_hover(m_pos)
+        if self.running:
+            m_pos = pygame.mouse.get_pos()
+            for item in self.load_list:
+                item.is_hover(m_pos)
 
     # Draw components
     def draw(self):
@@ -223,8 +223,6 @@ class Game:
             self.handle_events()
             self.draw()
 
-        # Quit Pygame
-        self.exit()
-
     def exit(self):
         pygame.quit()
+        sys.exit()
