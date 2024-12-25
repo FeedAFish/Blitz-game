@@ -9,9 +9,10 @@ data_dl.Download_UI(
 )
 
 # Run the main game
-try:
-    game = main_game.Game(800, 600)
-    game.run()
-except Exception as e:
-    with open("error.log", "a") as f:
-        f.writelines(str(e))
+# try:
+game = main_game.Game(800, 600)
+game.run()
+# except Exception as e:
+#     print(e)
+#     with open("error.log", "w") as f:
+#         f.writelines(str(e))

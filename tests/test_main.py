@@ -25,6 +25,7 @@ def test_main_game():
         game.board_ttt()
         game.board_snake()
         game.board_lines()
+        game.board_xo()
         game.exit()
     except Exception as e:
         with open("error.log", "a") as f:
