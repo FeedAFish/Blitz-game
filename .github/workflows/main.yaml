@@ -12,15 +12,13 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
-    - name: Build Docker image
-      run: |
-        docker build -t blitz-game .
+      run: docker build . --file Dockerfile --tag blitz-game:$(date +%s)
     
     - name: Test Docker container
       run: |
-        xvfb-run docker run --rm blitz-game python -c "import pygame; print('Pygame installed successfully')"
+        xvfb-run docker run --rm blitz-game:$(date +%s) python -c "import pygame; print('Pygame installed successfully')"
 
     env:
       SDL_VIDEODRIVER: dummy
