@@ -1,4 +1,5 @@
 from utils import main_game
+import traceback
 
 # Run the download file
 from utils import data_dl
@@ -13,5 +14,6 @@ try:
     game = main_game.Game(800, 600)
     game.run()
 except Exception as e:
-    with open("error.log", "a") as f:
-        f.writelines(str(e))
+    print(e)
+    with open("error.log", "w") as f:
+        traceback.print_exc(file=f)
