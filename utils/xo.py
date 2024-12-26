@@ -1,6 +1,7 @@
 from utils import elements
 from utils import bots
 
+import threading
 import pygame
 
 
@@ -21,8 +22,13 @@ class GameXO(elements.Board):
         self.init_board()
 
     def load_bot(self):  # Load bot
-        pass
+        try:
+            self.bot_rl = bots.XOBot.load("trained_xobot.pkl")
+        except FileNotFoundError:
+            self.mode = 0
+            print("Bot file not found. Please ensure 'trained_xobot.pkl' exists.")
 
+    # Manage gameplay
     def switch_mode(self):  # Switch PVE and PVP mode
         self.mode = 1 if self.mode == 0 else 0
 
@@ -31,12 +37,13 @@ class GameXO(elements.Board):
 
     def sizing_board(self):  # Sizing board
         self.grid_size = 20
-        self.board_size = 400 // self.grid_size + 1
-        self.width = self.height = self.grid_size * (self.board_size - 1)
+        self.board_size = 400 // self.grid_size
+        self.width = self.height = self.grid_size * (self.board_size + 1)
         self.hover_rect = self.rect.inflate(
             (420 - self.width) // 2, (420 - self.height) // 2
         )
 
+    # Config game
     def load_sound(self):  # Load sound
         self.move_sound = pygame.mixer.Sound("data/sound/error.mp3")
         self.set_sound(0.5)
@@ -64,54 +71,56 @@ class GameXO(elements.Board):
         ]
 
     def init_board(self):
-        self.board = [None for _ in range(self.board_size**2)]
+        self.board = [0 for _ in range((self.board_size) ** 2)]
         self.pause = False
         self.turn = 1
 
+    # Draw board
     def draw(self, surface):  # Draw board
         super().draw(surface)
         self.draw_grid(surface)  # Draw grid
         self.draw_elements(surface)  # Draw elements
         self.draw_result(surface)  # Draw result
 
-    def draw_grid(self, surface):
+    def draw_grid(self, surface):  # Draw grid
         for i in range(self.board_size):
             pygame.draw.line(
                 surface,
                 (128, 128, 128),
-                (self.x + self.grid_size // 2, self.y + i * self.grid_size),
+                (self.x + self.grid_size // 2, self.y + (i + 1) * self.grid_size),
                 (
-                    self.x + self.grid_size // 2 + self.width,
-                    self.y + i * self.grid_size,
+                    self.x - self.grid_size // 2 + self.width,
+                    self.y + (i + 1) * self.grid_size,
                 ),
                 1,
             )
             pygame.draw.line(
                 surface,
                 (128, 128, 128),
-                (self.x + i * self.grid_size, self.y + self.grid_size // 2),
+                (self.x + (i + 1) * self.grid_size, self.y + self.grid_size // 2),
                 (
-                    self.x + i * self.grid_size,
-                    self.y + self.grid_size // 2 + self.width,
+                    self.x + (i + 1) * self.grid_size,
+                    self.y - self.grid_size // 2 + self.width,
                 ),
                 1,
             )
 
-    def draw_elements(self, surface):
+    def draw_elements(self, surface):  # Draw elements on board
         for i, element in enumerate(self.board):
             if element:
                 x, y = i % self.board_size, i // self.board_size
                 surface.blit(
-                    self.image_list[(element + 1) // 2],
+                    self.image_list[element - 1],
                     (
                         self.x + self.grid_size + x * self.grid_size - 7,
                         self.y + self.grid_size + y * self.grid_size - 7,
                     ),
                 )
 
-    def draw_result(self, surface):
+    def draw_result(self, surface):  # Draw result
         pass
 
+    # Actions on click
     def on_click(self, event):
         if (
             event.type == pygame.MOUSEBUTTONDOWN
@@ -119,32 +128,43 @@ class GameXO(elements.Board):
             and not self.pause
         ):
             if self.hover_rect.collidepoint(event.pos):
-                x, y = self.mouse_position_to_indices(event.pos)
-                if self.board[x + y * self.board_size] is None:
-                    self.board[x + y * self.board_size] = self.turn
-                    self.turn = -self.turn
+                ind = self.mouse_position_to_indices(event.pos)
+                if not self.board[ind]:
+                    self.board[ind] = self.turn
+                    self.turn = 3 - self.turn
                     if self.check_win():
                         self.pause = True
 
-    def mouse_position_to_indices(
-        self, mouse_position
-    ):  # Convert mouse position to grid indices.
+                    if self.mode and self.turn != self.player and not self.pause:
+                        self.pause = True
+                        threading.Thread(target=self.bot_play).start()
+
+    # Action on bot PVE
+    def bot_play(self):
+        self.board = self.bot_rl.play(self.board, -self.player)
+        self.turn = 3 - self.turn
+        self.pause = False
+        if self.check_win():
+            self.pause = True
+
+    # Convert mouse position to indices.
+    def mouse_position_to_indices(self, mouse_position):
         x, y = mouse_position
         x -= self.x + self.grid_size // 2
         y -= self.y + self.grid_size // 2
 
-        return x // self.grid_size, y // self.grid_size
+        return x // self.grid_size + y // self.grid_size * self.board_size
 
     def find_consecutive_xo(self, lst):
         count = 1
         for index, star in enumerate(lst[1:], start=1):
-            if star == lst[index - 1] and star is not None:
+            if star == lst[index - 1] and star != 0:
                 count += 1
                 if count >= 5:
                     return star
             else:
                 count = 1
-        return None
+        return
 
     def check_win(self):
         for i in range(self.board_size):  # Check rows
@@ -177,4 +197,7 @@ class GameXO(elements.Board):
             if self.find_consecutive_xo(diagonal):
                 return self.find_consecutive_xo(diagonal)
 
-        return None
+        if all(cell != 0 for cell in self.board):
+            return -0.1
+
+        return

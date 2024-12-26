@@ -82,7 +82,7 @@ class TicTacToeBot:
                 return board[a]
 
         if all(cell is not None for cell in board):
-            return 0
+            return -0.1
 
         return None
 
@@ -104,7 +104,7 @@ class TicTacToeBot:
                 action = self.choose_action(board)
                 board[action] = self.player
                 self.states_record.append(self.get_state_hash(board))
-                if self.check_win(board) != None:
+                if self.check_win(board):
                     self.feed_reward(self.check_win(board))
                     break
                 self.player = -self.player
@@ -117,6 +117,152 @@ class TicTacToeBot:
         self.player = player
         action = self.choose_action(board)
         board[action] = self.player
+        return board
+
+    def save(self, path="bot_ttt.pkl"):
+        with open(path, "wb") as file:
+            pkl.dump(self, file)
+
+    @staticmethod
+    def load(path):
+        with open(path, "rb") as file:
+            instance = pkl.load(file)
+        return instance
+
+
+class XOBot:
+    def __init__(
+        self,
+        learning_rate=0.2,
+        discount_factor=0.9,
+        exploration_rate=1.0,
+        board_size=20,
+    ):
+        self.q_table = {}
+        self.board_size = board_size
+        self.learning_rate = learning_rate
+        self.discount_factor = discount_factor
+        self.exploration_rate = exploration_rate
+        self.exploration_decay = 0.9999
+        self.min_exploration_rate = 0.1
+
+    def get_state_hash(self, board):  # Hash state
+        return tuple(board)
+
+    def get_available_moves(self, board) -> list[int]:  # Get all available moves
+        return [i for i in range(len(board)) if board[i] is None]
+
+    def choose_action(self, board, player=1):
+        valid_moves = self.get_available_moves(board)
+        if random.random() < self.exploration_rate or tuple(board) not in self.q_table:
+            return random.choice(valid_moves)
+        return self.check_best(board, valid_moves, player=player)
+
+    def check_best(
+        self, board, valid_moves, variety=3, player=1
+    ):  # Random choice the first highest 'variety' moves if value > 0 else choose the highest value
+        best_moves = {}
+        for move in valid_moves:
+            next_board = board.copy()
+            next_board[move] = player
+            value = self.q_table.get(tuple(next_board), 0.0) * player
+            if value not in best_moves:
+                best_moves[value] = [move]
+            else:
+                best_moves[value].append(move)
+
+        bests = []
+        count = 0
+        for value in sorted(best_moves, reverse=True):
+            count += 1
+            if value > 0 or len(bests) == 0:
+                bests.extend(best_moves[value])
+                if count >= variety:
+                    break
+
+        return random.choice(bests)
+
+    def check_win(self, board):
+        for i in range(self.board_size):  # Check rows
+            row = board[i * self.board_size : (i + 1) * self.board_size]
+            if self.find_consecutive_xo(row):
+                return self.find_consecutive_xo(row)
+
+        for i in range(self.board_size):  # Check columns
+            col = [board[i + j * self.board_size] for j in range(self.board_size)]
+            if self.find_consecutive_xo(col):
+                return self.find_consecutive_xo(col)
+
+        for start in range(-self.board_size + 1, self.board_size):  # Check diagonal
+            diagonal = [
+                board[i * self.board_size + i + start]
+                for i in range(self.board_size)
+                if 0 <= i + start < self.board_size
+            ]
+            if self.find_consecutive_xo(diagonal):
+                return self.find_consecutive_xo(diagonal)
+
+        for start in range(
+            -self.board_size + 1, self.board_size
+        ):  # Check anti-diagonal
+            diagonal = [
+                board[i * self.board_size + start - i]
+                for i in range(self.board_size)
+                if 0 <= start - i < self.board_size
+            ]
+            if self.find_consecutive_xo(diagonal):
+                return self.find_consecutive_xo(diagonal)
+        if all(cell is not None for cell in board):
+            return -0.1
+
+        return None
+
+    def find_consecutive_xo(self, lst):
+        count = 1
+        prev = None
+        for star in lst:
+            if star == prev:
+                count += 1
+                if count >= 5:
+                    return star
+            else:
+                count = 1
+            prev = star
+        return None
+
+    def train(self, num_episodes=10000):
+        for espisode in range(num_episodes):
+            if espisode % 500 == 0:
+                print(f"Episode {espisode}: ")
+            board = [None] * self.board_size**2
+            player = 1
+            states = [self.get_state_hash(board)]
+            while True:
+                action = self.choose_action(board, player)
+                board[action] = player
+                states.append(self.get_state_hash(board))
+                result = self.check_win(board)
+                if result:
+                    self.feed_reward(result, states)
+                    break
+                player = -player
+            self.exploration_rate = max(
+                self.min_exploration_rate,
+                self.exploration_rate * self.exploration_decay,
+            )
+
+    def feed_reward(self, reward, states):
+        for state in reversed(states):
+            if state not in self.q_table:
+                self.q_table[state] = 0
+            self.q_table[state] += self.learning_rate * (
+                self.discount_factor * reward - self.q_table[state]
+            )
+            reward = self.q_table[state]
+
+    def play(self, board, player):
+        action = self.choose_action(board, player)
+        board[action] = player
         return board
 
     def save(self, path="bot_ttt.pkl"):
