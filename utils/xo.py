@@ -36,7 +36,7 @@ class GameXO(elements.Board):
         self.player = -self.player
 
     def sizing_board(self):  # Sizing board
-        self.grid_size = 20
+        self.grid_size = 30
         self.board_size = 400 // self.grid_size
         self.width = self.height = self.grid_size * (self.board_size + 1)
         self.hover_rect = self.rect.inflate(
@@ -61,13 +61,10 @@ class GameXO(elements.Board):
                 pygame.image.load(image_path).convert_alpha(), size
             )
 
+        size = int(self.grid_size * 0.7)
         self.image_list = [
-            load_n_scale(
-                "./data/img/XO_X.png", (self.grid_size - 6, self.grid_size - 6)
-            ),
-            load_n_scale(
-                "./data/img/XO_O.png", (self.grid_size - 6, self.grid_size - 6)
-            ),
+            load_n_scale("./data/img/XO_X.png", (size, size)),
+            load_n_scale("./data/img/XO_O.png", (size, size)),
         ]
 
     def init_board(self):
@@ -106,14 +103,15 @@ class GameXO(elements.Board):
             )
 
     def draw_elements(self, surface):  # Draw elements on board
+        gap = int(self.grid_size * 0.3)
         for i, element in enumerate(self.board):
             if element:
                 x, y = i % self.board_size, i // self.board_size
                 surface.blit(
                     self.image_list[element - 1],
                     (
-                        self.x + self.grid_size + x * self.grid_size - 7,
-                        self.y + self.grid_size + y * self.grid_size - 7,
+                        self.x + self.grid_size + x * self.grid_size - gap - 1,
+                        self.y + self.grid_size + y * self.grid_size - gap - 1,
                     ),
                 )
 
@@ -186,13 +184,11 @@ class GameXO(elements.Board):
             if self.find_consecutive_xo(diagonal):
                 return self.find_consecutive_xo(diagonal)
 
-        for start in range(
-            -self.board_size + 1, self.board_size
-        ):  # Check anti-diagonal
+        for start in range(-self.board_size + 1, self.board_size):  # Check diagonal
             diagonal = [
-                self.board[i * self.board_size + start - i]
+                self.board[(i + 1) * self.board_size - i - 1 + start]
                 for i in range(self.board_size)
-                if 0 <= start - i < self.board_size
+                if 0 <= i + start < self.board_size
             ]
             if self.find_consecutive_xo(diagonal):
                 return self.find_consecutive_xo(diagonal)
