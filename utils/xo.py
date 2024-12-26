@@ -119,64 +119,62 @@ class GameXO(elements.Board):
             and not self.pause
         ):
             if self.hover_rect.collidepoint(event.pos):
-                x, y = self.mpos_to_ind(event.pos)
+                x, y = self.mouse_position_to_indices(event.pos)
                 if self.board[x + y * self.board_size] is None:
                     self.board[x + y * self.board_size] = self.turn
                     self.turn = -self.turn
                     if self.check_win():
                         self.pause = True
 
-    def mpos_to_ind(self, m_pos):
-        x = m_pos[0] - self.x - self.grid_size // 2
-        y = m_pos[1] - self.y - self.grid_size // 2
+    def mouse_position_to_indices(
+        self, mouse_position
+    ):  # Convert mouse position to grid indices.
+        x, y = mouse_position
+        x -= self.x + self.grid_size // 2
+        y -= self.y + self.grid_size // 2
+
         return x // self.grid_size, y // self.grid_size
 
-    def find_consecutive(self, lst, start_indices):  # Find consecutive stars
+    def find_consecutive_xo(self, lst):
         count = 1
-        for k in range(1, len(lst)):
-            if lst[k] == lst[k - 1] and lst[k] != None:
+        for index, star in enumerate(lst[1:], start=1):
+            if star == lst[index - 1] and star is not None:
                 count += 1
                 if count >= 5:
-                    return lst[k]
+                    return star
             else:
                 count = 1
-        return
+        return None
 
     def check_win(self):
-        for i in range(self.board_size):  # Check row
+        for i in range(self.board_size):  # Check rows
             row = self.board[i * self.board_size : (i + 1) * self.board_size]
-            row_indices = [(i, j) for j in range(self.board_size)]
-            if self.find_consecutive(row, row_indices):
-                return self.find_consecutive(row, row_indices)
+            if self.find_consecutive_xo(row):
+                return self.find_consecutive_xo(row)
 
-        for j in range(self.board_size):  # Check column
-            col = [self.board[i * self.board_size + j] for i in range(self.board_size)]
-            col_indices = [(i, j) for i in range(self.board_size)]
-            if self.find_consecutive(col, col_indices):
-                return self.find_consecutive(col, col_indices)
+        for i in range(self.board_size):  # Check columns
+            col = [self.board[i + j * self.board_size] for j in range(self.board_size)]
+            if self.find_consecutive_xo(col):
+                return self.find_consecutive_xo(col)
 
         for start in range(-self.board_size + 1, self.board_size):  # Check diagonal
-            diag = []
-            diag_indices = []
-            for i in range(self.board_size):
-                j = i + start
-                if 0 <= i < self.board_size and 0 <= j < self.board_size:
-                    diag.append(self.board[i * self.board_size + j])
-                    diag_indices.append((i, j))
-            if self.find_consecutive(diag, diag_indices):
-                return self.find_consecutive(diag, diag_indices)
+            diagonal = [
+                self.board[i * self.board_size + i + start]
+                for i in range(self.board_size)
+                if 0 <= i + start < self.board_size
+            ]
+            if self.find_consecutive_xo(diagonal):
+                return self.find_consecutive_xo(diagonal)
 
         for start in range(
             -self.board_size + 1, self.board_size
         ):  # Check anti-diagonal
-            diag = []
-            diag_indices = []
-            for i in range(self.board_size):
-                j = start - i
-                if 0 <= i < self.board_size and 0 <= j < self.board_size:
-                    diag.append(self.board[i * self.board_size + j])
-                    diag_indices.append((i, j))
-            if self.find_consecutive(diag, diag_indices):
-                return self.find_consecutive(diag, diag_indices)
+            diagonal = [
+                self.board[i * self.board_size + start - i]
+                for i in range(self.board_size)
+                if 0 <= start - i < self.board_size
+            ]
+            if self.find_consecutive_xo(diagonal):
+                return self.find_consecutive_xo(diagonal)
 
         return None
