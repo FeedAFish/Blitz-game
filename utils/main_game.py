@@ -68,6 +68,19 @@ class Game:
             )
             y_pos += 110
 
+    def add_menu_ingame(self, menus):
+        buttons = [
+            elements.Button(
+                x=700,
+                y=280 + i * 80,
+                image_path="./data/img/wooden_button.png",
+                text=menu,
+                action=action,
+            )
+            for i, (menu, action) in enumerate(menus.items())
+        ]
+        self.load_list.extend(buttons)
+
     # Board_TTT
     def board_ttt(self):
         self.background = self.board
@@ -75,43 +88,13 @@ class Game:
         self.fps_base = False
         self.load_list = []
         self.load_list.append(elements.Board_TTT(90, 90))
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=200,
-                image_path="./data/img/wooden_button.png",
-                text="Restart",
-                action=self.load_list[0].init_board,
-            )
-        )
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=280,
-                image_path="./data/img/wooden_button.png",
-                text="Main Menu",
-                action=self.main_menu,
-            )
-        )
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=360,
-                image_path="./data/img/wooden_button.png",
-                text="Switch player",
-                action=self.load_list[0].switch_player,
-            )
-        )
-
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=440,
-                image_path="./data/img/wooden_button.png",
-                text="Switch mode",
-                action=self.load_list[0].switch_mode,
-            )
-        )
+        menus = {
+            "Restart": self.load_list[0].init_board,
+            "Main Menu": self.main_menu,
+            "Switch player": self.load_list[0].switch_player,
+            "Switch mode": self.load_list[0].switch_mode,
+        }
+        self.add_menu_ingame(menus)
 
     # Board Snake
     def board_snake(self):
@@ -120,33 +103,12 @@ class Game:
         self.fps_base = True
         self.load_list = []
         self.load_list.append(elements.Board_Snake(90, 90))
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=200,
-                image_path="./data/img/wooden_button.png",
-                text="Restart",
-                action=self.load_list[0].init_board,
-            )
-        )
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=280,
-                image_path="./data/img/wooden_button.png",
-                text="Main Menu",
-                action=self.main_menu,
-            )
-        )
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=360,
-                image_path="./data/img/wooden_button.png",
-                text="Pause",
-                action=self.load_list[0].pause_trig,
-            )
-        )
+        menus = {
+            "Restart": self.load_list[0].init_board,
+            "Main Menu": self.main_menu,
+            "Pause": self.load_list[0].pause_trig,
+        }
+        self.add_menu_ingame(menus)
 
     # Board Lines
     def board_lines(self):
@@ -155,87 +117,13 @@ class Game:
         self.fps_base = False
         self.load_list = []
         self.load_list.append(elements.Lines98(90, 90))
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=280,
-                image_path="./data/img/wooden_button.png",
-                text="Restart",
-                action=self.load_list[0].init_board,
-            )
-        )
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=360,
-                image_path="./data/img/wooden_button.png",
-                text="Main Menu",
-                action=self.main_menu,
-            )
-        )
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=440,
-                image_path="./data/img/wooden_button.png",
-                text=f"Change size",
-                action=self.load_list[0].grid_change,
-            )
-        )
-
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=520,
-                image_path="./data/img/wooden_button.png",
-                text=f"Mute",
-                action=self.load_list[0].change_sound,
-            )
-        )
-
-    def board_xo(self):
-        self.background = self.board
-        self.fps = 60
-        self.fps_base = False
-        self.load_list = []
-        self.load_list.append(xo.GameXO(90, 90))
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=200,
-                image_path="./data/img/wooden_button.png",
-                text="Restart",
-                action=self.load_list[0].init_board,
-            )
-        )
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=280,
-                image_path="./data/img/wooden_button.png",
-                text="Main Menu",
-                action=self.main_menu,
-            )
-        )
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=360,
-                image_path="./data/img/wooden_button.png",
-                text="Switch player",
-                action=self.load_list[0].switch_player,
-            )
-        )
-
-        self.load_list.append(
-            elements.Button(
-                x=700,
-                y=440,
-                image_path="./data/img/wooden_button.png",
-                text="Switch mode",
-                action=self.load_list[0].switch_mode,
-            )
-        )
+        menus = {
+            "Restart": self.load_list[0].init_board,
+            "Main Menu": self.main_menu,
+            "Change size": self.load_list[0].grid_change,
+            "Mute": self.load_list[0].change_sound,
+        }
+        self.add_menu_ingame(menus)
 
     # Handle in-app events
     def handle_events(self):
@@ -246,10 +134,14 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-                self.exit()
 
             for item in self.load_list:
                 item.on_click(event)
+
+        if self.running:
+            m_pos = pygame.mouse.get_pos()
+            for item in self.load_list:
+                item.is_hover(m_pos)
 
     # Draw components
     def draw(self):
@@ -268,9 +160,7 @@ class Game:
             self.handle_events()
             self.draw()
 
-        # Quit Pygame
-        self.exit()
-
     def exit(self):
         sys.exit()
         pygame.quit()
+        sys.exit()

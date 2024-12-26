@@ -4,6 +4,7 @@ import py7zr
 import shutil
 import tkinter as tk
 import threading
+import datetime
 
 
 class Download_UI:
@@ -46,8 +47,14 @@ class Download_UI:
                 self.root.after(
                     1000, self.create_popup_message, f"Error downloading data !"
                 )
-                with open("error.log", "w") as f:
-                    f.writelines(str(e))
+                with open("error.log", "a") as f:
+                    f.writelines("\n")
+                    f.writelines(
+                        "At "
+                        + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        + " :\n"
+                    )
+                    f.writelines(f"Error downloading data ! " + str(e))
         else:
             self.root.after(1000, self.create_popup_message, "Data is up to date !")
         self.root.after(2000, self.root.destroy)

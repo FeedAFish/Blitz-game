@@ -776,6 +776,18 @@ class Lines98(Board):
                     diag.append(self.board[i * self.board_size + j])
                     diag_indices.append((i, j))
             to_clear_indices.update(self.find_consecutive(diag, diag_indices))
+
+        # Check diagonals (top-right to bottom-left)
+        for start in range(-self.board_size + 1, self.board_size):
+            diag = []
+            diag_indices = []
+            for i in range(self.board_size):
+                j = self.board_size - 1 - i + start
+                if 0 <= i < self.board_size and 0 <= j < self.board_size:
+                    diag.append(self.board[i * self.board_size + j])
+                    diag_indices.append((i, j))
+            to_clear_indices.update(self.find_consecutive(diag, diag_indices))
+
         self.to_clear = {i * self.board_size + j for i, j in to_clear_indices}
 
     def add_next_balls(self):  # Add next balls to the board
