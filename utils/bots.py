@@ -1,5 +1,6 @@
 import random
 import pickle as pkl
+import bitarray
 
 
 class TicTacToeBot:
@@ -146,26 +147,35 @@ class XOBot:
         self.exploration_decay = 0.9999
         self.min_exploration_rate = 0.1
 
-    def get_state_hash(self, board):  # Hash state
-        return tuple(board)
+    def get_state_hash(self, board):  # Convert board to bitarray hash
+        ba = bitarray.bitarray(2 * len(board))
+        for i, val in enumerate(board):
+            ba[i * 2 : (i + 1) * 2] = bitarray.bitarray(
+                "00" if val == 0 else "01" if val == 1 else "10"
+            )
+        return ba.tobytes()
 
     def get_available_moves(self, board) -> list[int]:  # Get all available moves
         return [i for i in range(len(board)) if board[i] is None]
 
     def choose_action(self, board, player=1):
         valid_moves = self.get_available_moves(board)
-        if random.random() < self.exploration_rate or tuple(board) not in self.q_table:
+        if (
+            random.random() < self.exploration_rate
+            or self.get_state_hash(board) not in self.q_table
+        ):
             return random.choice(valid_moves)
         return self.check_best(board, valid_moves, player=player)
 
     def check_best(
         self, board, valid_moves, variety=3, player=1
     ):  # Random choice the first highest 'variety' moves if value > 0 else choose the highest value
+        side = 1 if player == 1 else -1
         best_moves = {}
         for move in valid_moves:
             next_board = board.copy()
             next_board[move] = player
-            value = self.q_table.get(tuple(next_board), 0.0) * player
+            value = self.q_table.get(self.get_state_hash(board), 0.0) * side
             if value not in best_moves:
                 best_moves[value] = [move]
             else:
@@ -234,7 +244,7 @@ class XOBot:
         for espisode in range(num_episodes):
             if espisode % 500 == 0:
                 print(f"Episode {espisode}: ")
-            board = [None] * self.board_size**2
+            board = [0] * self.board_size**2
             player = 1
             states = [self.get_state_hash(board)]
             while True:
@@ -245,7 +255,7 @@ class XOBot:
                 if result:
                     self.feed_reward(result, states)
                     break
-                player = -player
+                player = 1 if player == 2 else 2
             self.exploration_rate = max(
                 self.min_exploration_rate,
                 self.exploration_rate * self.exploration_decay,
