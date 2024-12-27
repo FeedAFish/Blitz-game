@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import pickle as pkl
+import tensorflow as tf
 from tensorflow.keras.models import Sequential  # type: ignore
 from tensorflow.keras.layers import Dense  # type: ignore
 from tensorflow.keras.optimizers import Adam  # type: ignore
@@ -67,7 +68,7 @@ class XO_Bot:
             q_values[0][action] = target
             self.model.fit(state, q_values, epochs=1, verbose=0)
 
-    def update_epsilon(self):
+    def update_exp_rate(self):
         if self.exploration_rate > self.min_exploration_rate:
             self.exploration_rate *= self.exploration_decay
 
@@ -88,7 +89,7 @@ class XO_Bot:
                     break
 
             self.replay(64)
-            self.update_epsilon()
+            self.update_exp_rate()
             if episode % 100 == 0:
                 print(f"Episode {episode}: Total reward: {total_reward}")
 
@@ -156,12 +157,32 @@ class XO_Bot:
         board[action] = player
         return board
 
-    def save(self, path="bot_ttt.pkl"):
-        with open(path, "wb") as file:
-            pkl.dump(self, file)
+    def save(self, path="bot_ttt"):
+        # Save the model separately
+        model_path = f"{path}_model.h5"
+        self.model.save(model_path)
+
+        # Save the remaining attributes with pickle
+        with open(f"{path}_attributes.pkl", "wb") as file:
+            attributes = self.__dict__.copy()
+            attributes.pop("model")  # Remove the model before pickling
+            pkl.dump(attributes, file)
+
+        print(f"Bot saved successfully to {path}.")
 
     @staticmethod
     def load(path):
-        with open(path, "rb") as file:
-            instance = pkl.load(file)
+        # Load the attributes
+        with open(f"{path}_attributes.pkl", "rb") as file:
+            attributes = pkl.load(file)
+
+        # Create a new instance and set its attributes
+        instance = XO_Bot(attributes["board_size"])
+        instance.__dict__.update(attributes)
+
+        # Reload the TensorFlow model
+        model_path = f"{path}_model.h5"
+        instance.model = tf.keras.models.load_model(model_path)
+
+        print(f"Bot loaded successfully from {path}.")
         return instance

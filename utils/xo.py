@@ -1,5 +1,5 @@
 from utils import elements
-from utils import bots
+from utils import xo_bot
 
 import threading
 import pygame
@@ -23,7 +23,7 @@ class GameXO(elements.Board):
 
     def load_bot(self):  # Load bot
         try:
-            self.bot_rl = bots.XOBot.load("trained_xobot.pkl")
+            self.bot_rl = xo_bot.XO_Bot.load("bot_ttt")
         except FileNotFoundError:
             self.bot_rl = None
             self.mode = 0
