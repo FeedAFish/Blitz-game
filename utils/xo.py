@@ -25,12 +25,13 @@ class GameXO(elements.Board):
         try:
             self.bot_rl = bots.XOBot.load("trained_xobot.pkl")
         except FileNotFoundError:
+            self.bot_rl = None
             self.mode = 0
             print("Bot file not found. Please ensure 'trained_xobot.pkl' exists.")
 
     # Manage gameplay
     def switch_mode(self):  # Switch PVE and PVP mode
-        self.mode = 1 if self.mode == 0 else 0
+        self.mode = 1 if self.mode == 0 and self.bot_rl else 0
 
     def switch_player(self):  # Switch player turn
         self.player = -self.player
