@@ -129,8 +129,8 @@ class Board_TTT(Board):
             self.bot_rl = bots.TicTacToeBot.load("data/bot/test_1.pkl")
         except FileNotFoundError:
             print("Bot file not found. Please ensure 'test_1.pkl' exists.")
-            pygame.quit()
-            sys.exit()
+            self.mode = 0
+            self.player = 1
         self.init_board()
         self.load_image()
 
@@ -271,7 +271,11 @@ class Board_TTT(Board):
         self.init_board()
 
     def switch_mode(self):
-        self.mode = 1 - self.mode
+        if self.bot_rl:
+            self.mode = 1 - self.mode
+        else:
+            self.mode = 0
+            self.player = 1
         self.init_board()
 
 
