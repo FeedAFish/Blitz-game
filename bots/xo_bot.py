@@ -28,7 +28,7 @@ class XO_Bot:
 
         self.model = self.build_model().to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.CrossEntropyLoss()
 
     def build_model(self):
         model = nn.Sequential(
@@ -46,8 +46,10 @@ class XO_Bot:
             return self.model(state).cpu().numpy()
 
     def fit(self, board, q_values):
+        state = torch.FloatTensor(board).to(self.device)
+        q_values = torch.FloatTensor(q_values).to(self.device)
         self.optimizer.zero_grad()
-        outputs = self.predict(board)
+        outputs = self.model(state)
         self.criterion(outputs, q_values).backward()
         self.optimizer.step()
 
@@ -75,8 +77,8 @@ class XO_Bot:
             if not done:
                 target -= self.discount_factor * np.amax(self.predict(n_board))
             q_values = self.predict(board)
-            q_values[0][action] = target
-            self.fit(board, q_values, epochs=1, verbose=0)
+            q_values[action] = target
+            self.fit(board, q_values)
 
     def update_exp_rate(self):
         if self.exploration_rate > self.min_exploration_rate:
@@ -94,13 +96,12 @@ class XO_Bot:
                 self.remember(board, action, reward, n_board, done)
                 board = n_board
                 total_reward += reward
-
                 if done:
                     break
 
             self.replay(64)
             self.update_exp_rate()
-            if episode % 10 == 0:
+            if episode % 1000 == 0:
                 print(f"Episode {episode}: Total reward: {total_reward}")
 
     def step(self, action, board):
@@ -156,7 +157,7 @@ class XO_Bot:
             ]
             if self.find_consecutive_xo(diagonal):
                 return 100, True
-        if all(cell is not None for cell in board):
+        if all(cell != 0 for cell in board):
             return 0, True
 
         return 1, False
