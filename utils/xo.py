@@ -1,5 +1,5 @@
 from utils import elements
-from utils import xo_bot
+from bots import xo_bot
 
 import threading
 import pygame

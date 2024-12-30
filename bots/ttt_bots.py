@@ -16,44 +16,35 @@ class TicTacToeBot:
         self.discount_factor = discount_factor
         self.exploration_rate = exploration_rate
         self.exploration_decay = 0.9999
-        self.min_exploration_rate = 0.001
+        self.min_exploration_rate = 0.1
 
     def get_state_hash(self, board):
         return tuple(board)
 
-    def get_moves(self, board):
+    def get_available_moves(self, board):
         return [i for i in range(9) if not board[i]]
 
-    def choose_action(
-        self,
-        board,
-    ):
-        valid_moves = self.get_moves(board)
-        # Exploration
-        if random.random() < self.exploration_rate:
+    def choose_action(self, board, player):
+        valid_moves = self.get_available_moves(board)
+        if (
+            random.random() < self.exploration_rate
+            or self.get_state_hash(board) not in self.q_table
+            or all(cell is None for cell in board)
+        ):
             return random.choice(valid_moves)
+        return self.check_best(board, valid_moves, player)
 
-        # Exploitation
-        state_key = self.get_state_hash(board)
-        if state_key not in self.q_table:
-            return random.choice(valid_moves)
-
-        if state_key == tuple([None] * 9):
-            return random.choice(valid_moves)
-
-        return self.check_best(board, valid_moves)
-
-    def check_best(self, board, valid_moves):
+    def check_best(self, board, valid_moves, player):
         next_board = board.copy()
         max_value = -100
 
         for move in valid_moves:
-            next_board[move] = self.player
+            next_board[move] = player
 
             if tuple(next_board) not in self.q_table:
                 value = 0
             else:
-                value = self.q_table.get(tuple(next_board)) * self.player
+                value = self.q_table.get(tuple(next_board)) * player
 
             if value > max_value:
                 max_value = value
@@ -99,25 +90,26 @@ class TicTacToeBot:
     def train(self, num_episodes=10000):
         for episode in range(num_episodes):
             board = [None] * 9
-            self.player = 1
+            player = 1
             self.states_record = [self.get_state_hash(board)]
+            if episode % 3000 == 0:
+                print(f"Episode {episode}: ...")
             while True:
-                action = self.choose_action(board)
-                board[action] = self.player
+                action = self.choose_action(board, player)
+                board[action] = player
                 self.states_record.append(self.get_state_hash(board))
                 if self.check_win(board):
                     self.feed_reward(self.check_win(board))
                     break
-                self.player = -self.player
+                player = -player
             self.exploration_rate = max(
                 self.min_exploration_rate,
                 self.exploration_rate * self.exploration_decay,
             )
 
     def play(self, board, player):
-        self.player = player
-        action = self.choose_action(board)
-        board[action] = self.player
+        action = self.choose_action(board, player)
+        board[action] = player
         return board
 
     def save(self, path="bot_ttt.pkl"):
