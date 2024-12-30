@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import pickle as pkl
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -177,6 +176,5 @@ class XO_Bot:
         # Load the attributes
         with open(f"{path}", "rb") as file:
             instance = torch.load(file, weights_only=False)
-
         print(f"Bot loaded successfully from {path}.")
         return instance
