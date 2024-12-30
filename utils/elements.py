@@ -128,7 +128,7 @@ class Board_TTT(Board):
         try:
             self.bot_rl = ttt_bots.TicTacToeBot.load("data/bot/bot_30122024.pkl")
         except FileNotFoundError:
-            print("Bot file not found. Please ensure 'test_1.pkl' exists.")
+            print("Bot file not found.")
             pygame.quit()
             sys.exit()
         self.init_board()
