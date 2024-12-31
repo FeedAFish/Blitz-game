@@ -1,6 +1,7 @@
 import pygame
 import sys
 from utils import elements
+from utils import xo
 
 
 class Game:
@@ -51,6 +52,7 @@ class Game:
             "Tic-Tac-Toe": self.board_ttt,
             "Snake": self.board_snake,
             "Lines 98": self.board_lines,
+            "X-O": self.board_xo,
             "Back": self.main_menu,
         }
         y_pos = 300 - len(menus) * 55 + 55
@@ -123,9 +125,27 @@ class Game:
         }
         self.add_menu_ingame(menus)
 
+    # Board X-O
+    def board_xo(self):
+        self.background = self.board
+        self.fps = 60
+        self.fps_base = False
+        self.load_list = []
+        self.load_list.append(xo.GameXO(90, 90))
+        menus = {
+            "Restart": self.load_list[0].init_board,
+            "Main Menu": self.main_menu,
+            "Switch player": self.load_list[0].switch_player,
+            "Switch mode": self.load_list[0].switch_mode,
+        }
+        self.add_menu_ingame(menus)
+
     # Handle in-app events
     def handle_events(self):
-        """Handle pygame events"""
+        m_pos = pygame.mouse.get_pos()
+        for item in self.load_list:
+            item.is_hover(m_pos)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -156,5 +176,6 @@ class Game:
             self.draw()
 
     def exit(self):
+        sys.exit()
         pygame.quit()
         sys.exit()

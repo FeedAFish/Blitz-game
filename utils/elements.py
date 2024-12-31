@@ -1,7 +1,7 @@
 import pygame
 import sys
 import random
-from utils import bots
+from bots import ttt_bots
 
 
 class Element:
@@ -126,7 +126,7 @@ class Board_TTT(Board):
         self.mode = 1
         self.player = -1
         try:
-            self.bot_rl = bots.TicTacToeBot.load("data/bot/test_1.pkl")
+            self.bot_rl = ttt_bots.TicTacToeBot.load("data/bot/bot_30122024.pkl")
         except FileNotFoundError:
             print("Bot file not found. Please ensure 'test_1.pkl' exists.")
             self.mode = 0
