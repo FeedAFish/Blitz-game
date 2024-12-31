@@ -9,7 +9,7 @@ class XO_Bot:
     def __init__(
         self,
         board_size,
-        learning_rate=0.2,
+        learning_rate=0.02,
         discount_factor=0.9,
         exploration_rate=1.0,
     ):
@@ -32,8 +32,15 @@ class XO_Bot:
 
     def build_model(self):
         model = nn.Sequential(
-            nn.Linear(self.state_size, 64),
+            nn.Linear(self.state_size, 256),
             nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Dropout(0.1),
             nn.Linear(64, 32),
             nn.ReLU(),
             nn.Linear(32, self.action_size),
@@ -106,7 +113,7 @@ class XO_Bot:
 
     def step(self, action, board):
         if board[action] != 0:  # Invalid move
-            return board, -1000, True
+            return board, -10, True
 
         # Apply move
         board[action] = self.current_player
@@ -131,12 +138,12 @@ class XO_Bot:
         for i in range(self.board_size):  # Check rows
             row = board[i * self.board_size : (i + 1) * self.board_size]
             if self.find_consecutive_xo(row):
-                return 100, True
+                return 10, True
 
         for i in range(self.board_size):  # Check columns
             col = [board[i + j * self.board_size] for j in range(self.board_size)]
             if self.find_consecutive_xo(col):
-                return 100, True
+                return 10, True
 
         for start in range(-self.board_size + 1, self.board_size):  # Check diagonal
             diagonal = [
@@ -145,7 +152,7 @@ class XO_Bot:
                 if 0 <= i + start < self.board_size
             ]
             if self.find_consecutive_xo(diagonal):
-                return 100, True
+                return 10, True
 
         for start in range(
             -self.board_size + 1, self.board_size
@@ -160,7 +167,7 @@ class XO_Bot:
         if all(cell != 0 for cell in board):
             return 0, True
 
-        return 1, False
+        return 0.1, False
 
     def play(self, board, player):
         action = self.choose_action(board)

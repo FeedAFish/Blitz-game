@@ -23,7 +23,7 @@ class GameXO(elements.Board):
 
     def load_bot(self):  # Load bot
         try:
-            self.bot_rl = xo_bot.XO_Bot.load("bot_ttt")
+            self.bot_rl = xo_bot.XO_Bot.load("data/bot/bot_xo.mdl")
         except FileNotFoundError:
             self.bot_rl = None
             self.mode = 0
@@ -128,6 +128,7 @@ class GameXO(elements.Board):
         ):
             if self.hover_rect.collidepoint(event.pos):
                 ind = self.mouse_position_to_indices(event.pos)
+                print(self.pause)
                 if not self.board[ind]:
                     self.board[ind] = self.turn
                     self.turn = 3 - self.turn
@@ -136,11 +137,12 @@ class GameXO(elements.Board):
 
                     if self.mode and self.turn != self.player and not self.pause:
                         self.pause = True
+                        print(self.pause)
                         threading.Thread(target=self.bot_play).start()
 
     # Action on bot PVE
     def bot_play(self):
-        self.board = self.bot_rl.play(self.board, -self.player)
+        self.board = self.bot_rl.play(self.board, self.turn)
         self.turn = 3 - self.turn
         self.pause = False
         if self.check_win():
