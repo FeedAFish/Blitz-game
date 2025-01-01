@@ -3,7 +3,7 @@ setlocal
 
 REM Step 1: Create executable with PyInstaller
 echo Creating executable with PyInstaller...
-python -m PyInstaller main.py --windowed --onefile --add-data "utils;utils" --name "Blitz game" --icon "data/img/icon.ico"
+python -m PyInstaller main.py --windowed --onefile --add-data "utils;utils" --add-data "bots;bots" --name "Blitz game" --icon "data/img/icon.ico"
 if ERRORLEVEL 1 (
     echo PyInstaller encountered an error. Exiting...
     exit /b 1
