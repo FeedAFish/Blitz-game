@@ -1,6 +1,6 @@
 import pygame
 import sys
-from utils import elements
+from utils import elements, board_2048
 
 # from utils import xo
 
@@ -53,6 +53,7 @@ class Game:
             "Tic-Tac-Toe": self.board_ttt,
             "Snake": self.board_snake,
             "Lines 98": self.board_lines,
+            "2048": self.board_2048,
             # "X-O": self.board_xo,
             "Back": self.main_menu,
         }
@@ -123,6 +124,20 @@ class Game:
             "Main Menu": self.main_menu,
             "Change size": self.load_list[0].grid_change,
             "Mute": self.load_list[0].change_sound,
+        }
+        self.add_menu_ingame(menus)
+
+    # Board 2048
+    def board_2048(self):
+        self.background = self.board
+        self.fps = 60
+        self.fps_base = False
+        self.load_list = []
+        self.load_list.append(board_2048.Board_2048(90, 90))
+        menus = {
+            "Restart": self.load_list[0].init_board,
+            "Main Menu": self.main_menu,
+            "Pause": self.load_list[0].to_pause,
         }
         self.add_menu_ingame(menus)
 
