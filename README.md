@@ -1,6 +1,6 @@
 # Blitz Game Collection
 
-A collection of classic games built with Pygame including Snake, Tic-Tac-Toe, and Lines.
+A collection of classic games built with Pygame including Snake, Tic-Tac-Toe, 2048 and Lines.
 
 ## Features
 
@@ -49,3 +49,15 @@ docker run --rm -e DISPLAY=host.docker.internal:0 blitz-game
 
 ## Error Handling
 Errors are logged to error.log with timestamps for debugging.
+
+## Updates & Changelog
+
+### Version 0.2
+- Added new game modes
+- Improved UI interactions
+- Fixed audio issues
+- Enhanced error logging
+
+### Version 0.3
+- Added 2048
+- Remove XO game for furthur dev.
