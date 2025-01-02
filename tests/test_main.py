@@ -1,6 +1,7 @@
 import os
 import pytest
 import sys
+import traceback
 
 sys.path.append(os.path.abspath("./"))
 
@@ -28,7 +29,6 @@ def test_main_game():
         game.board_2048()
         # game.board_xo()
     except Exception as e:
-        with open("error.log", "a") as f:
-            f.writelines(str(e))
+        traceback.print_exc()
         assert False
     assert True
