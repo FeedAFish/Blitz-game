@@ -6,7 +6,7 @@ import datetime
 from utils import data_dl
 
 data_dl.Download_UI(
-    version="0.2",
+    version="0.3",
     url="https://drive.google.com/uc?id=1_e2zIMJjbTr-qf5qGEiFO4UQTw8pqBTF",
 )
 
