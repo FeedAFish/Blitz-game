@@ -142,6 +142,11 @@ class Board_2048(elements.Board):
         rect = text.get_rect()
         rect.center = (700, 100)
         surface.blit(text, rect)
+        if self.end:
+            text = self.font.render("Game Over", True, (0, 0, 0))
+            rect = text.get_rect()
+            rect.center = (700, 140)
+            surface.blit(text, rect)
 
     # Game Mechanics
     def on_key_down(self, event):  # Key down event
@@ -149,13 +154,13 @@ class Board_2048(elements.Board):
             return
 
         if event.key == pygame.K_UP:
-            self.move(0)
+            self.board = self.move(0)
         elif event.key == pygame.K_DOWN:
-            self.move(1)
+            self.board = self.move(1)
         elif event.key == pygame.K_LEFT:
-            self.move(2)
+            self.board = self.move(2)
         elif event.key == pygame.K_RIGHT:
-            self.move(3)
+            self.board = self.move(3)
 
     def add_new_element(self):
         available = [i for i in range(self.board_size**2) if not self.board[i]]
@@ -170,13 +175,13 @@ class Board_2048(elements.Board):
         if self.pause or self.end:
             return
         if direction == 0:
-            self.move_up()
+            return self.move_up()
         elif direction == 1:
-            self.move_down()
+            return self.move_down()
         elif direction == 2:
-            self.move_left()
+            return self.move_left()
         elif direction == 3:
-            self.move_right()
+            return self.move_right()
 
     def list_move(self, lst):  # Move value by list
         col = [i for i in lst]
@@ -197,22 +202,28 @@ class Board_2048(elements.Board):
         return col
 
     def move_up(self):  # Move up
+        board = self.board.copy()
         for i in range(self.board_size):
+
             lst = [self.board[j] for j in range(i, self.board_size**2, self.board_size)]
             lst = self.list_move(lst)
 
             for j in range(i, self.board_size**2, self.board_size):
-                self.board[j] = lst[j // self.board_size]
+                board[j] = lst[j // self.board_size]
+        return board
 
     def move_down(self):  # Move down
+        board = self.board.copy()
         for i in range(self.board_size):
             lst = [self.board[j] for j in range(i, self.board_size**2, self.board_size)]
             lst = lst[::-1]
             lst = self.list_move(lst)
             for j in range(i, self.board_size**2, self.board_size):
-                self.board[j] = lst[3 - j // self.board_size]
+                board[j] = lst[3 - j // self.board_size]
+        return board
 
     def move_left(self):  # Move left
+        board = self.board.copy()
         for i in range(self.board_size):
             lst = [
                 self.board[j]
@@ -221,9 +232,11 @@ class Board_2048(elements.Board):
             lst = self.list_move(lst)
 
             for j in range(i * self.board_size, (i + 1) * self.board_size):
-                self.board[j] = lst[j % self.board_size]
+                board[j] = lst[j % self.board_size]
+        return board
 
     def move_right(self):  # Move right
+        board = self.board.copy()
         for i in range(self.board_size):
             lst = [
                 self.board[j]
@@ -234,7 +247,15 @@ class Board_2048(elements.Board):
             lst = self.list_move(lst)
 
             for j in range((i + 1) * self.board_size - 1, i * self.board_size - 1, -1):
-                self.board[j] = lst[3 - j % self.board_size]
+                board[j] = lst[3 - j % self.board_size]
+        return board
+
+    def check_end(self):  # Check win
+        for i in range(4):
+            if self.move(i) != self.board:
+                return False
+        pygame.mixer.Sound("data/sound/loss.mp3").play()
+        return True
 
     # Event handle
     def on_click(self, event):
@@ -243,6 +264,8 @@ class Board_2048(elements.Board):
             self.on_key_down(event)
             if self.board != self.o_board:
                 self.add_new_element()
+                if self.check_end():
+                    self.end = True
 
     def to_pause(self):
         self.pause = not self.pause
