@@ -27,6 +27,7 @@ def test_main_game():
         game.board_snake()
         game.board_lines()
         game.board_2048()
+        game.board_animal()
         # game.board_xo()
     except Exception as e:
         traceback.print_exc()

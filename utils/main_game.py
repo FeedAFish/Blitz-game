@@ -1,6 +1,7 @@
 import pygame
 import sys
 from utils import elements, board_2048
+from utils import animal_dev
 
 # from utils import xo
 
@@ -26,7 +27,7 @@ class Game:
         self.add_menu_buttons()
 
     def add_menu_buttons(self):
-        menus = {"Play": self.choice_menu, "Exit": self.exit}
+        menus = {"Play": lambda: self.choice_menu(1), "Exit": self.exit}
         y_pos = 300
         for menu, action in menus.items():
             self.load_list.append(
@@ -41,22 +42,32 @@ class Game:
             y_pos += 110
 
     # Game choice menu
-    def choice_menu(self):
+    def choice_menu(self, page=1):
         self.background = self.main_bg
         self.fps = 60
         self.fps_base = False
         self.load_list = []
-        self.add_choice_buttons()
+        self.add_choice_buttons(page)
 
-    def add_choice_buttons(self):
-        menus = {
-            "Tic-Tac-Toe": self.board_ttt,
-            "Snake": self.board_snake,
-            "Lines 98": self.board_lines,
-            "2048": self.board_2048,
-            # "X-O": self.board_xo,
-            "Back": self.main_menu,
-        }
+    def add_choice_buttons(self, page=1):
+        menus = (
+            {
+                "Tic-Tac-Toe": self.board_ttt,
+                "Snake": self.board_snake,
+                "Lines 98": self.board_lines,
+                "Next": lambda: self.choice_menu(2),
+                # "X-O": self.board_xo,
+                "Main Menu": self.main_menu,
+            }
+            if page == 1
+            else {
+                "2048": self.board_2048,
+                "Animal": self.board_animal,
+                "Next": lambda: self.choice_menu(1),
+                "Main Menu": self.main_menu,
+            }
+        )
+
         y_pos = 300 - len(menus) * 55 + 55
         for menu, action in menus.items():
             self.load_list.append(
@@ -138,6 +149,19 @@ class Game:
             "Restart": self.load_list[0].init_board,
             "Main Menu": self.main_menu,
             "Pause": self.load_list[0].to_pause,
+        }
+        self.add_menu_ingame(menus)
+
+    def board_animal(self):
+        self.background = self.board
+        self.fps = 60
+        self.fps_base = False
+        self.load_list = []
+        self.load_list.append(animal_dev.Animal(90, 90))
+        menus = {
+            "Restart": self.load_list[0].init_board,
+            "Main Menu": self.main_menu,
+            # "Pause": self.load_list[0].to_pause,
         }
         self.add_menu_ingame(menus)
 
