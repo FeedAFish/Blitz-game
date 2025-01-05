@@ -715,7 +715,7 @@ class Lines98(Board):
             result.add(place + self.board_size)
         return result
 
-    def adjacents(self, places: list) -> set:  # Get adjacent by list
+    def adjacents(self, places) -> set:  # Get adjacent by list
         result = set()
         for place in places:
             result.update(self.adjacent(place))
