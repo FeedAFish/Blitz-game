@@ -478,7 +478,7 @@ class Lines98(Board):
                 return surface
 
         self.font = pygame.font.Font("./data/font/LovelyKids-gxly4.ttf", 35)
-        list_file = [f"data/img/star {i+1}.png" for i in range(7)]
+        list_file = [f"data/img/star/star {i+1}.png" for i in range(7)]
         self.list_image = [
             pygame.transform.scale(
                 load_image_with_default(file),
