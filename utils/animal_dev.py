@@ -27,9 +27,12 @@ class Animal(elements.Board):
         )
         self.init_board()
 
-    def init_board(self):
+    def init_board(self, score=0, level=0, lifes=10):  # Reinitiate the board
         self.clicked = None
         self.pause = False
+        self.score = score
+        self.level = level
+        self.lifes = lifes
         self.counter = 0
         self.path = None
         self.load_image()
@@ -46,7 +49,7 @@ class Animal(elements.Board):
             for j in range(0, self.board_size[1]):
                 self.board[i + 1][j + 1] = lst.pop()
 
-    def load_image(self):
+    def load_image(self):  # Load image
         self.mahjong = pygame.transform.scale(
             pygame.image.load(r"./data/img/mahjong.png"),
             (self.grid_size[0] - 1, self.grid_size[1] - 2),
@@ -61,13 +64,14 @@ class Animal(elements.Board):
         ]
         self.rect_element = self.food[0].get_rect()
 
-    def draw(self, surface):
+    # Drawing of board
+    def draw(self, surface):  # Draw the board
         super().draw(surface)
         self.draw_clicked(surface)
         self.draw_elements(surface)
         self.draw_matched(surface)
 
-    def draw_clicked(self, surface):
+    def draw_clicked(self, surface):  # Draw clicked mahjong
         if self.clicked:
             pygame.draw.rect(
                 surface,
@@ -81,12 +85,12 @@ class Animal(elements.Board):
                 2,
             )
 
-    def draw_elements(self, surface):
+    def draw_elements(self, surface):  # Draw elements
         for i in range(self.board_size[0]):
             for j in range(self.board_size[1]):
                 self.draw_one_element(surface, (i, j), self.board[i + 1][j + 1])
 
-    def draw_one_element(self, surface, pos, element):
+    def draw_one_element(self, surface, pos, element):  # Draw one element
         if element:
             surface.blit(
                 self.mahjong,
@@ -104,18 +108,20 @@ class Animal(elements.Board):
                 self.rect_element,
             )
 
-    def draw_matched(self, surface):
+    def draw_matched(self, surface):  # Draw matched line
         if self.path:
             if self.counter == 20:
                 self.pause = False
                 self.counter = 0
                 self.path = None
+                if not self.check_possible_move():
+                    self.rearrange_board()
                 return
             self.counter += 1
             for pos, npos in zip(self.path[:-1], self.path[1:]):
                 self.draw_gradient_line(surface, pos, npos)
 
-    def draw_gradient_line(self, surface, start, end):
+    def draw_gradient_line(self, surface, start, end):  # Draw line for matched
         outline_color = (248, 212, 105)
         inline_color = (246, 154, 58)
         x_0, y_0 = (
@@ -155,9 +161,10 @@ class Animal(elements.Board):
             1,
         )
 
+    # Game mechanics
     def is_reachable(
         self, start: tuple[int, int], dest: tuple[int, int], max=2
-    ) -> bool:
+    ):  # Check if path is reachable
         if not self.board:
             return None
 
@@ -204,13 +211,40 @@ class Animal(elements.Board):
                                 node.path + [(new_x, new_y)],
                             )
                         )
+        return
 
-    def mpos_to_ind(self, m_pos):
+    def mpos_to_ind(self, m_pos):  # Mouse position to board indices
         # Mouse Position to Indice on board
         x = m_pos[0] - self.x
         y = m_pos[1] - self.y
         return (x // self.grid_size[0]) + 1, (y // self.grid_size[1]) + 1
 
+    def check_possible_move(self):  # Check remaining possible move
+        if all(
+            cell == 0
+            for j in range(1, self.board_size[0] + 2)
+            for cell in self.board[j]
+        ):
+            self.init_board(self.score, self.level + 1, self.lifes)
+        for i in range(self.board_size[0]):
+            for j in range(self.board_size[1]):
+                if self.board[i + 1][j + 1]:
+                    for k in range(self.board_size[0]):
+                        for l in range(self.board_size[1]):
+                            if self.board[k + 1][l + 1] == self.board[i + 1][j + 1]:
+                                if self.is_reachable((i + 1, j + 1), (k + 1, l + 1)):
+                                    return True
+        return False
+
+    def rearrange_board(self):
+        lst = [i for j in range(self.board_size[0] + 2) for i in self.board[j] if i]
+        random.shuffle(lst)
+        for i in range(self.board_size[0]):
+            for j in range(self.board_size[1]):
+                if self.board[i + 1][j + 1]:
+                    self.board[i + 1][j + 1] = lst.pop()
+
+    # Event handler
     def on_click(self, event):
         if (
             event.type == pygame.MOUSEBUTTONDOWN
@@ -231,6 +265,7 @@ class Animal(elements.Board):
                         self.board[pos[0]][pos[1]] = self.board[self.clicked[0]][
                             self.clicked[1]
                         ] = 0
+                        self.score += 20
                         self.pause = True
                     self.clicked = None
                 elif self.clicked:
