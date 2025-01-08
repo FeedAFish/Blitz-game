@@ -832,3 +832,651 @@ class Lines98(Board):
             to_clear.extend(start_indices[-count:])
             self.score += count + (count - 5) ** 2  # Score calculation
         return to_clear
+
+
+class Board_2048(Board):
+    def __init__(self, x, y, image_path=None):
+        super().__init__(x, y, image_path)
+        self.board_size = 4
+        self.grid_size = 100
+        self.width = self.grid_size * self.board_size
+        self.x = 100
+        self.y = 100
+        self.load_color()
+        self.load_image_and_font("data/img/2048_bg.png", "data/img/box_2048.png")
+        self.init_board()
+
+    # Initialize the board
+    def init_board(self):  # Initialize the board
+        self.pause = True
+        self.end = False
+        self.score = 0
+        self.board = [0 for _ in range((self.board_size) ** 2)]
+        for _ in range(2):
+            self.add_new_element()
+        self.score = 0
+        self.pause = False
+
+    def load_image_and_font(self, bg_path, box_path):  # Load image for the board
+        try:
+            self.bg = pygame.transform.scale(
+                pygame.image.load(bg_path).convert_alpha(),
+                (self.width, self.width),
+            )
+            self.box = pygame.transform.scale(
+                pygame.image.load(box_path).convert_alpha(),
+                (self.grid_size, self.grid_size),
+            )
+        except pygame.error:
+            print("Cannot load image:", bg_path, box_path)
+            self.bg = pygame.Surface((self.width, self.width))
+
+        try:
+            self.font = pygame.font.Font("data/font/LovelyKids-gxly4.ttf", 25)
+        except:
+            self.font = pygame.font.Font(None, 25)
+
+    def load_color(self):
+        self.color = [
+            (255, 255, 255),  # White
+            (128, 128, 128),  # Gray
+            (0, 255, 0),  # Green
+            (0, 0, 255),  # Blue
+            (255, 165, 0),  # Orange
+            (255, 255, 0),  # Yellow
+            (128, 0, 128),  # Purple
+            (255, 192, 203),  # Pink
+            (165, 42, 42),  # Brown
+            (0, 0, 0),  # Black
+            (255, 0, 0),  # Red
+            (0, 255, 255),  # Cyan
+            (255, 0, 255),  # Magenta
+            (0, 128, 128),  # Teal
+            (237, 197, 63),  # Gold
+        ]
+
+    # Draw the board
+    def draw(self, surface):  # Draw the board
+        super().draw(surface)
+        self.draw_grid(surface)
+        self.draw_elements(surface)
+        self.draw_result(surface)
+
+    def draw_grid(self, surface):  # Draw grid for the board
+        pygame.draw.rect(surface, (0, 0, 0), self.rect.inflate(-7, -7), border_radius=3)
+        surface.blit(self.bg, (self.x, self.y))
+        board = pygame.Surface((self.width, self.width), pygame.SRCALPHA)
+        pygame.draw.rect(
+            board,
+            (119, 110, 101, 200),
+            board.get_rect(),
+        )
+        surface.blit(board, (self.x, self.y))
+        for i in range(self.board_size - 1):
+            pygame.draw.line(
+                surface,
+                (0, 0, 0),
+                (self.x, self.y + (i + 1) * self.grid_size),
+                (
+                    self.x + self.width,
+                    self.y + (i + 1) * self.grid_size,
+                ),
+                1,
+            )
+            pygame.draw.line(
+                surface,
+                (0, 0, 0),
+                (self.x + (i + 1) * self.grid_size, self.y),
+                (
+                    self.x + (i + 1) * self.grid_size,
+                    self.y + self.width,
+                ),
+            )
+
+    def draw_elements(self, surface):  # Draw elements on board
+        for num, i in enumerate(self.board):
+            if i:
+                self.draw_one_element(surface, num, i)
+
+    def draw_one_element(self, surface, pos, value):  # Draw one element on board
+        x = pos % self.board_size
+        y = pos // self.board_size
+        pygame.draw.circle(
+            surface,
+            self.color[value - 1],
+            (
+                self.x + x * self.grid_size + self.grid_size // 2,
+                self.y + y * self.grid_size + self.grid_size // 2,
+            ),
+            self.grid_size // 2,
+        )
+        surface.blit(
+            self.box,
+            (self.x + x * self.grid_size, self.y + y * self.grid_size),
+        )
+        text = self.font.render(str(2**value), True, (0, 0, 0))
+        text = pygame.transform.rotate(text, -10)
+        text_rect = text.get_rect(
+            center=(
+                self.x + x * self.grid_size + self.grid_size // 3,
+                self.y + y * self.grid_size + 2 * self.grid_size // 3,
+            )
+        )
+        surface.blit(
+            text,
+            text_rect,
+        )
+
+    def draw_result(self, surface):  # Draw the result
+        text = self.font.render(f"Score: {self.score}", True, (0, 0, 0))
+        rect = text.get_rect()
+        rect.center = (700, 100)
+        surface.blit(text, rect)
+
+    # Game Mechanics
+    def on_key_down(self, event):  # Key down event
+        if self.pause or self.end:
+            return
+
+        if event.key == pygame.K_UP:
+            self.move(0)
+        elif event.key == pygame.K_DOWN:
+            self.move(1)
+        elif event.key == pygame.K_LEFT:
+            self.move(2)
+        elif event.key == pygame.K_RIGHT:
+            self.move(3)
+
+    def add_new_element(self):
+        available = [i for i in range(self.board_size**2) if not self.board[i]]
+        if not available:
+            self.end = True
+        rand = random.choice([1, 1, 1, 2])
+
+        self.board[random.choice(available)] = rand
+        self.score += 2**rand
+
+    def move(self, direction):
+        if self.pause or self.end:
+            return
+        if direction == 0:
+            self.move_up()
+        elif direction == 1:
+            self.move_down()
+        elif direction == 2:
+            self.move_left()
+        elif direction == 3:
+            self.move_right()
+
+    def list_move(self, lst):  # Move value by list
+        col = [i for i in lst]
+        for j in range(self.board_size):
+            if not col[j]:
+                for k in range(j + 1, self.board_size):
+                    if col[k]:
+                        col[j], col[k] = col[k], col[j]
+                        break
+            if col[j]:
+                for k in range(j + 1, self.board_size):
+                    if col[k]:
+                        if col[k] == col[j]:
+                            col[j] += 1
+                            col[k] = 0
+                            self.score += 2 ** (col[j])
+                        break
+        return col
+
+    def move_up(self):  # Move up
+        for i in range(self.board_size):
+            lst = [self.board[j] for j in range(i, self.board_size**2, self.board_size)]
+            lst = self.list_move(lst)
+
+            for j in range(i, self.board_size**2, self.board_size):
+                self.board[j] = lst[j // self.board_size]
+
+    def move_down(self):  # Move down
+        for i in range(self.board_size):
+            lst = [self.board[j] for j in range(i, self.board_size**2, self.board_size)]
+            lst = lst[::-1]
+            lst = self.list_move(lst)
+            for j in range(i, self.board_size**2, self.board_size):
+                self.board[j] = lst[3 - j // self.board_size]
+
+    def move_left(self):  # Move left
+        for i in range(self.board_size):
+            lst = [
+                self.board[j]
+                for j in range(i * self.board_size, (i + 1) * self.board_size)
+            ]
+            lst = self.list_move(lst)
+
+            for j in range(i * self.board_size, (i + 1) * self.board_size):
+                self.board[j] = lst[j % self.board_size]
+
+    def move_right(self):  # Move right
+        for i in range(self.board_size):
+            lst = [
+                self.board[j]
+                for j in range(
+                    (i + 1) * self.board_size - 1, i * self.board_size - 1, -1
+                )
+            ]
+            lst = self.list_move(lst)
+
+            for j in range((i + 1) * self.board_size - 1, i * self.board_size - 1, -1):
+                self.board[j] = lst[3 - j % self.board_size]
+
+    # Event handle
+    def on_click(self, event):
+        if event.type == pygame.KEYDOWN:
+            self.o_board = self.board.copy()
+            self.on_key_down(event)
+            if self.board != self.o_board:
+                self.add_new_element()
+
+    def to_pause(self):
+        self.pause = not self.pause
+
+
+class PathNode:
+    def __init__(self, x, y, turns, direction, path):
+        self.x = x
+        self.y = y
+        self.turns = turns
+        self.direction = direction
+        self.path = path if path else []
+
+
+class Animal(Board):
+    def __init__(self, x, y, image_path=None):
+        super().__init__(x, y, image_path)
+        self.grid_size = [30, 50]
+        self.board_size = [360 // self.grid_size[0], 400 // self.grid_size[1]]
+        self.x = 120
+        self.y = 100
+        self.hover_rect = pygame.rect.Rect(
+            self.x + 1,
+            self.y + 1,
+            self.board_size[0] * self.grid_size[0] - 1,
+            self.board_size[1] * self.grid_size[1] - 1,
+        )
+        self.init_board()
+
+    def init_board(self, score=0, level=0, lifes=10):  # Reinitiate the board
+        self.timer = 18000
+        self.clicked = None
+        self.pause = False
+        self.score = score
+        self.level = level
+        self.lifes = lifes
+        self.counter = 0
+        self.path = None
+        self.load_image_and_font()
+        lst = [
+            i
+            for i in range(1, self.board_size[0] * self.board_size[1] // 4 + 1)
+            for _ in range(4)
+        ]
+        random.shuffle(lst)
+        self.board = [
+            [0] * (self.board_size[1] + 2) for _ in (range(self.board_size[0] + 2))
+        ]
+        for i in range(0, self.board_size[0]):
+            for j in range(0, self.board_size[1]):
+                self.board[i + 1][j + 1] = lst.pop()
+
+    def load_image_and_font(self):  # Load image
+        self.font = pygame.font.Font(r"./data/font/LovelyKids-gxly4.ttf", 35)
+        self.mahjong = pygame.transform.scale(
+            pygame.image.load(r"./data/img/mahjong.png"),
+            (self.grid_size[0] - 1, self.grid_size[1] - 2),
+        )
+
+        lst = random.sample(range(1, 77), self.board_size[0] * self.board_size[1] // 4)
+        self.food = [
+            pygame.transform.scale(
+                pygame.image.load(rf"./data/img/food/food_{i}.png"), (16, 16)
+            )
+            for i in lst
+        ]
+        self.rect_element = self.food[0].get_rect()
+
+    # Drawing of board
+    def draw(self, surface):  # Draw the board
+        if self.timer and not self.pause:
+            self.timer -= 1
+        else:
+            self.pause = True
+        super().draw(surface)
+        self.draw_clicked(surface)
+        self.draw_elements(surface)
+        self.draw_matched(surface)
+        self.draw_result(surface)
+
+    def draw_clicked(self, surface):  # Draw clicked mahjong
+        if self.clicked:
+            pygame.draw.rect(
+                surface,
+                (0, 0, 0),
+                (
+                    self.x + self.clicked[0] * self.grid_size[0] - self.grid_size[0],
+                    self.y + self.clicked[1] * self.grid_size[1] - self.grid_size[1],
+                    self.grid_size[0],
+                    self.grid_size[1],
+                ),
+                2,
+            )
+
+    def draw_elements(self, surface):  # Draw elements
+        for i in range(self.board_size[0]):
+            for j in range(self.board_size[1]):
+                self.draw_one_element(surface, (i, j), self.board[i + 1][j + 1])
+
+    def draw_one_element(self, surface, pos, element):  # Draw one element
+        if element:
+            surface.blit(
+                self.mahjong,
+                (
+                    self.x + pos[0] * self.grid_size[0],
+                    self.y + pos[1] * self.grid_size[1] + 1,
+                ),
+            )
+            self.rect_element.center = (
+                self.x + pos[0] * self.grid_size[0] + self.grid_size[0] // 2,
+                self.y + pos[1] * self.grid_size[1] + self.grid_size[1] // 2,
+            )
+            surface.blit(
+                self.food[element - 1],
+                self.rect_element,
+            )
+
+    def draw_matched(self, surface):  # Draw matched line
+        if self.path:
+            if self.counter == 20:
+                self.pause = False
+                self.counter = 0
+                self.path = None
+                self.move()
+                if not self.check_possible_move():
+                    self.rearrange_board()
+                return
+            self.counter += 1
+            for pos, npos in zip(self.path[:-1], self.path[1:]):
+                self.draw_gradient_line(surface, pos, npos)
+
+    def draw_gradient_line(self, surface, start, end):  # Draw line for matched
+        outline_color = (248, 212, 105)
+        inline_color = (246, 154, 58)
+        x_0, y_0 = (
+            self.x
+            - self.grid_size[0]
+            + start[0] * self.grid_size[0]
+            + self.grid_size[0] // 2,
+            self.y
+            - self.grid_size[1]
+            + start[1] * self.grid_size[1]
+            + self.grid_size[1] // 2,
+        )
+        x_1, y_1 = (
+            self.x
+            - self.grid_size[0]
+            + end[0] * self.grid_size[0]
+            + self.grid_size[0] // 2,
+            self.y
+            - self.grid_size[1]
+            + end[1] * self.grid_size[1]
+            + self.grid_size[1] // 2,
+        )
+
+        pygame.draw.line(
+            surface,
+            outline_color,
+            (x_0, y_0),
+            (x_1, y_1),
+            5,
+        )
+
+        pygame.draw.line(
+            surface,
+            inline_color,
+            (x_0, y_0),
+            (x_1, y_1),
+            1,
+        )
+
+    def draw_result(self, surface):
+        text = self.font.render(f"Score: {self.score}", True, (0, 0, 0))
+        rect = text.get_rect()
+        rect.center = (700, 100)
+        surface.blit(text, rect)
+        text = self.font.render(f"Level: {self.level + 1}", True, (0, 0, 0))
+        rect = text.get_rect()
+        rect.center = (700, 140)
+        surface.blit(text, rect)
+
+    # Game mechanics
+    def is_reachable(
+        self, start: tuple[int, int], dest: tuple[int, int], max=2
+    ):  # Check if path is reachable
+        if not self.board:
+            return None
+
+        passed_place = set()
+        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]  # right, left, down, up
+        queue = []
+        for i in range(4):
+            queue.append(PathNode(start[0], start[1], 0, i, [start]))
+
+        while queue:
+            node = queue.pop(0)
+            if node.x == dest[0] and node.y == dest[1]:
+                return node.path
+
+            for direction in directions:
+                new_x = node.x + direction[0]
+                new_y = node.y + direction[1]
+
+                if (
+                    0 <= new_x < self.board_size[0] + 2
+                    and 0 <= new_y < self.board_size[1] + 2
+                ):
+                    if self.board[new_x][new_y] != 0 and (
+                        new_x != dest[0] or new_y != dest[1]
+                    ):
+                        continue
+
+                    new_turns = node.turns + (
+                        node.direction != directions.index(direction)
+                    )
+
+                    if new_turns > max:
+                        continue
+
+                    state = (new_x, new_y, direction, new_turns)
+                    if state not in passed_place:
+                        passed_place.add(state)
+                        queue.append(
+                            PathNode(
+                                new_x,
+                                new_y,
+                                new_turns,
+                                directions.index(direction),
+                                node.path + [(new_x, new_y)],
+                            )
+                        )
+        return
+
+    def mpos_to_ind(self, m_pos):  # Mouse position to board indices
+        # Mouse Position to Indice on board
+        x = m_pos[0] - self.x
+        y = m_pos[1] - self.y
+        return (x // self.grid_size[0]) + 1, (y // self.grid_size[1]) + 1
+
+    def check_possible_move(self):  # Check remaining possible move
+        if all(
+            cell == 0
+            for j in range(1, self.board_size[0] + 2)
+            for cell in self.board[j]
+        ):  # Check if board is empty
+            if self.level == 6:
+                return
+            self.init_board(self.score, self.level + 1, self.lifes)
+
+        for i in range(self.board_size[0]):  # Check for possible move
+            for j in range(self.board_size[1]):
+                if self.board[i + 1][j + 1]:
+                    for k in range(self.board_size[0]):
+                        for l in range(self.board_size[1]):
+                            if self.board[k + 1][l + 1] == self.board[i + 1][j + 1]:
+                                if self.is_reachable(
+                                    (i + 1, j + 1), (k + 1, l + 1)
+                                ) and (i, j) != (k, l):
+                                    return True
+        return False
+
+    def rearrange_board(self):
+        if self.lifes:
+            self.lifes -= 1
+        else:
+            self.pause = True
+        lst = [i for j in range(self.board_size[0] + 2) for i in self.board[j] if i]
+        random.shuffle(lst)
+        for i in range(self.board_size[0]):
+            for j in range(self.board_size[1]):
+                if self.board[i + 1][j + 1]:
+                    self.board[i + 1][j + 1] = lst.pop()
+
+    def move(self):
+        if self.level == 1:
+            self.move_down()
+        if self.level == 2:
+            self.move_up()
+        if self.level == 3:
+            self.move_right()
+        if self.level == 4:
+            self.move_left()
+        if self.level == 5:
+            self.move_center_horizontal()
+        if self.level == 6:
+            self.move_center_vertical()
+        return
+
+    def move_up(self):  # Move up
+        for i in range(self.board_size[0]):
+            lst = [
+                self.board[i + 1][j + 1]
+                for j in range(self.board_size[1])
+                if self.board[i + 1][j + 1]
+            ]
+            for j in range(self.board_size[1]):
+                self.board[i + 1][j + 1] = lst[j] if j < len(lst) else 0
+
+    def move_down(self):  # Move down
+        for i in range(self.board_size[0]):
+            lst = [
+                self.board[i + 1][j + 1]
+                for j in range(self.board_size[1])
+                if self.board[i + 1][j + 1]
+            ]
+            lst = lst[::-1]
+            for j in range(self.board_size[1]):
+                self.board[i + 1][self.board_size[1] - j] = (
+                    lst[j] if j < len(lst) else 0
+                )
+
+    def move_left(self):  # Move left
+        for i in range(self.board_size[1]):
+            lst = [
+                self.board[j + 1][i + 1]
+                for j in range(self.board_size[0])
+                if self.board[j + 1][i + 1]
+            ]
+            for j in range(self.board_size[0]):
+                self.board[j + 1][i + 1] = lst[j] if j < len(lst) else 0
+
+    def move_right(self):  # Move right
+        for i in range(self.board_size[1]):
+            lst = [
+                self.board[j + 1][i + 1]
+                for j in range(self.board_size[0])
+                if self.board[j + 1][i + 1]
+            ]
+            lst = lst[::-1]
+            for j in range(self.board_size[0]):
+                self.board[self.board_size[0] - j][i + 1] = (
+                    lst[j] if j < len(lst) else 0
+                )
+
+    def move_center_vertical(self):
+        for i in range(self.board_size[1]):
+            lst = [
+                self.board[j + 1][i + 1]
+                for j in range(self.board_size[0] // 2)
+                if self.board[j + 1][i + 1]
+            ]
+            lst = lst[::-1]
+            for j in range(self.board_size[0] // 2):
+                self.board[self.board_size[0] // 2 - j][i + 1] = (
+                    lst[j] if j < len(lst) else 0
+                )
+            lst = [
+                self.board[j + self.board_size[0] // 2 + 1][i + 1]
+                for j in range(self.board_size[0] // 2)
+                if self.board[j + 1 + self.board_size[0] // 2][i + 1]
+            ]
+            for j in range(self.board_size[0] // 2):
+                self.board[self.board_size[0] // 2 + j + 1][i + 1] = (
+                    lst[j] if j < len(lst) else 0
+                )
+
+    def move_center_horizontal(self):
+        for i in range(self.board_size[0]):
+            lst = [
+                self.board[i + 1][j + 1]
+                for j in range(self.board_size[1] // 2)
+                if self.board[i + 1][j + 1]
+            ]
+            lst = lst[::-1]
+            for j in range(self.board_size[1] // 2):
+                self.board[i + 1][self.board_size[1] // 2 - j] = (
+                    lst[j] if j < len(lst) else 0
+                )
+            lst = [
+                self.board[i + 1][j + self.board_size[1] // 2 + 1]
+                for j in range(self.board_size[1] // 2)
+                if self.board[i + 1][j + 1 + self.board_size[1] // 2]
+            ]
+            for j in range(self.board_size[1] // 2):
+                self.board[i + 1][self.board_size[1] // 2 + j + 1] = (
+                    lst[j] if j < len(lst) else 0
+                )
+
+    # Event handler
+    def on_click(self, event):
+        if (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+            and not self.pause
+        ):
+            if self.hover_rect.collidepoint(event.pos):
+                pos = self.mpos_to_ind(event.pos)
+                if (
+                    self.clicked
+                    and self.clicked != pos
+                    and self.board[pos[0]][pos[1]]
+                    and self.board[self.clicked[0]][self.clicked[1]]
+                    == self.board[pos[0]][pos[1]]
+                ):
+                    self.path = self.is_reachable(self.clicked, pos)
+                    if self.path:
+                        self.board[pos[0]][pos[1]] = self.board[self.clicked[0]][
+                            self.clicked[1]
+                        ] = 0
+                        self.score += 20
+                        self.pause = True
+                    self.clicked = None
+                elif self.clicked:
+                    self.clicked = None
+                else:
+                    if self.board[pos[0]][pos[1]]:
+                        self.clicked = pos

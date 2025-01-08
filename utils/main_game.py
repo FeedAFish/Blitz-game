@@ -1,7 +1,6 @@
 import pygame
 import sys
-from utils import elements, board_2048
-from utils import animal_dev
+from utils import elements
 
 # from utils import xo
 
@@ -144,7 +143,7 @@ class Game:
         self.fps = 60
         self.fps_base = False
         self.load_list = []
-        self.load_list.append(board_2048.Board_2048(90, 90))
+        self.load_list.append(elements.Board_2048(90, 90))
         menus = {
             "Restart": self.load_list[0].init_board,
             "Main Menu": self.main_menu,
@@ -157,11 +156,10 @@ class Game:
         self.fps = 60
         self.fps_base = False
         self.load_list = []
-        self.load_list.append(animal_dev.Animal(90, 90))
+        self.load_list.append(elements.Animal(90, 90))
         menus = {
             "Restart": self.load_list[0].init_board,
             "Main Menu": self.main_menu,
-            # "Pause": self.load_list[0].to_pause,
         }
         self.add_menu_ingame(menus)
 
