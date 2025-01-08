@@ -114,6 +114,7 @@ class Animal(elements.Board):
                 self.pause = False
                 self.counter = 0
                 self.path = None
+                self.move()
                 if not self.check_possible_move():
                     self.rearrange_board()
                 return
@@ -243,6 +244,63 @@ class Animal(elements.Board):
             for j in range(self.board_size[1]):
                 if self.board[i + 1][j + 1]:
                     self.board[i + 1][j + 1] = lst.pop()
+
+    def move(self):
+        if self.level == 1:
+            self.move_down()
+        if self.level == 2:
+            self.move_up()
+        if self.level == 3:
+            self.move_right()
+        if self.level == 4:
+            self.move_left()
+        return
+
+    def move_up(self):  # Move up
+        for i in range(self.board_size[0]):
+            lst = [
+                self.board[i + 1][j + 1]
+                for j in range(self.board_size[1])
+                if self.board[i + 1][j + 1]
+            ]
+            for j in range(self.board_size[1]):
+                self.board[i + 1][j + 1] = lst[j] if j < len(lst) else 0
+
+    def move_down(self):  # Move down
+        for i in range(self.board_size[0]):
+            lst = [
+                self.board[i + 1][j + 1]
+                for j in range(self.board_size[1])
+                if self.board[i + 1][j + 1]
+            ]
+            lst = lst[::-1]
+            for j in range(self.board_size[1]):
+                self.board[i + 1][self.board_size[1] - j] = (
+                    lst[j] if j < len(lst) else 0
+                )
+
+    def move_left(self):  # Move left
+        for i in range(self.board_size[1]):
+            lst = [
+                self.board[j + 1][i + 1]
+                for j in range(self.board_size[0])
+                if self.board[j + 1][i + 1]
+            ]
+            for j in range(self.board_size[0]):
+                self.board[j + 1][i + 1] = lst[j] if j < len(lst) else 0
+
+    def move_right(self):  # Move right
+        for i in range(self.board_size[1]):
+            lst = [
+                self.board[j + 1][i + 1]
+                for j in range(self.board_size[0])
+                if self.board[j + 1][i + 1]
+            ]
+            lst = lst[::-1]
+            for j in range(self.board_size[0]):
+                self.board[self.board_size[0] - j][i + 1] = (
+                    lst[j] if j < len(lst) else 0
+                )
 
     # Event handler
     def on_click(self, event):
