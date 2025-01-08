@@ -36,7 +36,7 @@ class Animal(elements.Board):
         self.lifes = lifes
         self.counter = 0
         self.path = None
-        self.load_image()
+        self.load_image_and_font()
         lst = [
             i
             for i in range(1, self.board_size[0] * self.board_size[1] // 4 + 1)
@@ -50,7 +50,8 @@ class Animal(elements.Board):
             for j in range(0, self.board_size[1]):
                 self.board[i + 1][j + 1] = lst.pop()
 
-    def load_image(self):  # Load image
+    def load_image_and_font(self):  # Load image
+        self.font = pygame.font.Font(r"./data/font/LovelyKids-gxly4.ttf", 35)
         self.mahjong = pygame.transform.scale(
             pygame.image.load(r"./data/img/mahjong.png"),
             (self.grid_size[0] - 1, self.grid_size[1] - 2),
@@ -67,7 +68,7 @@ class Animal(elements.Board):
 
     # Drawing of board
     def draw(self, surface):  # Draw the board
-        if self.timer:
+        if self.timer and not self.pause:
             self.timer -= 1
         else:
             self.pause = True
@@ -75,6 +76,7 @@ class Animal(elements.Board):
         self.draw_clicked(surface)
         self.draw_elements(surface)
         self.draw_matched(surface)
+        self.draw_result(surface)
 
     def draw_clicked(self, surface):  # Draw clicked mahjong
         if self.clicked:
@@ -167,6 +169,16 @@ class Animal(elements.Board):
             1,
         )
 
+    def draw_result(self, surface):
+        text = self.font.render(f"Score: {self.score}", True, (0, 0, 0))
+        rect = text.get_rect()
+        rect.center = (700, 100)
+        surface.blit(text, rect)
+        text = self.font.render(f"Level: {self.level + 1}", True, (0, 0, 0))
+        rect = text.get_rect()
+        rect.center = (700, 140)
+        surface.blit(text, rect)
+
     # Game mechanics
     def is_reachable(
         self, start: tuple[int, int], dest: tuple[int, int], max=2
@@ -230,15 +242,20 @@ class Animal(elements.Board):
             cell == 0
             for j in range(1, self.board_size[0] + 2)
             for cell in self.board[j]
-        ):
+        ):  # Check if board is empty
+            if self.level == 6:
+                return
             self.init_board(self.score, self.level + 1, self.lifes)
-        for i in range(self.board_size[0]):
+
+        for i in range(self.board_size[0]):  # Check for possible move
             for j in range(self.board_size[1]):
                 if self.board[i + 1][j + 1]:
                     for k in range(self.board_size[0]):
                         for l in range(self.board_size[1]):
                             if self.board[k + 1][l + 1] == self.board[i + 1][j + 1]:
-                                if self.is_reachable((i + 1, j + 1), (k + 1, l + 1)):
+                                if self.is_reachable(
+                                    (i + 1, j + 1), (k + 1, l + 1)
+                                ) and (i, j) != (k, l):
                                     return True
         return False
 
@@ -263,7 +280,7 @@ class Animal(elements.Board):
             self.move_right()
         if self.level == 4:
             self.move_left()
-        if self.level == 0:
+        if self.level == 5:
             self.move_center_horizontal()
         if self.level == 6:
             self.move_center_vertical()
