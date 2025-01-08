@@ -28,6 +28,7 @@ class Animal(elements.Board):
         self.init_board()
 
     def init_board(self, score=0, level=0, lifes=10):  # Reinitiate the board
+        self.timer = 18000
         self.clicked = None
         self.pause = False
         self.score = score
@@ -66,6 +67,10 @@ class Animal(elements.Board):
 
     # Drawing of board
     def draw(self, surface):  # Draw the board
+        if self.timer:
+            self.timer -= 1
+        else:
+            self.pause = True
         super().draw(surface)
         self.draw_clicked(surface)
         self.draw_elements(surface)
@@ -238,6 +243,10 @@ class Animal(elements.Board):
         return False
 
     def rearrange_board(self):
+        if self.lifes:
+            self.lifes -= 1
+        else:
+            self.pause = True
         lst = [i for j in range(self.board_size[0] + 2) for i in self.board[j] if i]
         random.shuffle(lst)
         for i in range(self.board_size[0]):
@@ -254,6 +263,10 @@ class Animal(elements.Board):
             self.move_right()
         if self.level == 4:
             self.move_left()
+        if self.level == 0:
+            self.move_center_horizontal()
+        if self.level == 6:
+            self.move_center_vertical()
         return
 
     def move_up(self):  # Move up
@@ -299,6 +312,50 @@ class Animal(elements.Board):
             lst = lst[::-1]
             for j in range(self.board_size[0]):
                 self.board[self.board_size[0] - j][i + 1] = (
+                    lst[j] if j < len(lst) else 0
+                )
+
+    def move_center_vertical(self):
+        for i in range(self.board_size[1]):
+            lst = [
+                self.board[j + 1][i + 1]
+                for j in range(self.board_size[0] // 2)
+                if self.board[j + 1][i + 1]
+            ]
+            lst = lst[::-1]
+            for j in range(self.board_size[0] // 2):
+                self.board[self.board_size[0] // 2 - j][i + 1] = (
+                    lst[j] if j < len(lst) else 0
+                )
+            lst = [
+                self.board[j + self.board_size[0] // 2 + 1][i + 1]
+                for j in range(self.board_size[0] // 2)
+                if self.board[j + 1 + self.board_size[0] // 2][i + 1]
+            ]
+            for j in range(self.board_size[0] // 2):
+                self.board[self.board_size[0] // 2 + j + 1][i + 1] = (
+                    lst[j] if j < len(lst) else 0
+                )
+
+    def move_center_horizontal(self):
+        for i in range(self.board_size[0]):
+            lst = [
+                self.board[i + 1][j + 1]
+                for j in range(self.board_size[1] // 2)
+                if self.board[i + 1][j + 1]
+            ]
+            lst = lst[::-1]
+            for j in range(self.board_size[1] // 2):
+                self.board[i + 1][self.board_size[1] // 2 - j] = (
+                    lst[j] if j < len(lst) else 0
+                )
+            lst = [
+                self.board[i + 1][j + self.board_size[1] // 2 + 1]
+                for j in range(self.board_size[1] // 2)
+                if self.board[i + 1][j + 1 + self.board_size[1] // 2]
+            ]
+            for j in range(self.board_size[1] // 2):
+                self.board[i + 1][self.board_size[1] // 2 + j + 1] = (
                     lst[j] if j < len(lst) else 0
                 )
 
