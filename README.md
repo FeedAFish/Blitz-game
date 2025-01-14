@@ -61,3 +61,6 @@ Errors are logged to error.log with timestamps for debugging.
 ### Version 0.3
 - Added 2048
 - Remove XO game for furthur dev.
+
+### Version 0.4
+- Added Animal game with basic mechanics of 7 levels
