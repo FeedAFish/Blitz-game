@@ -87,7 +87,6 @@ class Button(Element):
     # Check if is hovered
     def is_hover(self, mouse_pos):
         self.hover = self.rect.collidepoint(mouse_pos)
-        return self.hover
 
     # Action on click
     def on_click(self, event):
@@ -1101,11 +1100,13 @@ class Animal(Board):
             self.board_size[1] * self.grid_size[1] - 1,
         )
         self.init_board()
+        self.next_level = True
 
     def init_board(self, score=0, level=0, lifes=10):  # Reinitiate the board
         self.timer = 18000
         self.clicked = None
         self.pause = False
+        self.next_level = False
         self.score = score
         self.level = level
         self.lifes = lifes
@@ -1141,6 +1142,14 @@ class Animal(Board):
         ]
         self.rect_element = self.food[0].get_rect()
 
+        self.next_level_button = Button(
+            700,
+            200,
+            image_path="./data/img/wooden_button.png",
+            text="Next level",
+            action=self.to_next_level,
+        )
+
     # Drawing of board
     def draw(self, surface):  # Draw the board
         if self.timer and not self.pause:
@@ -1152,6 +1161,7 @@ class Animal(Board):
         self.draw_elements(surface)
         self.draw_matched(surface)
         self.draw_result(surface)
+        self.draw_next_level(surface)
 
     def draw_clicked(self, surface):  # Draw clicked mahjong
         if self.clicked:
@@ -1254,6 +1264,10 @@ class Animal(Board):
         rect.center = (700, 140)
         surface.blit(text, rect)
 
+    def draw_next_level(self, surface):
+        if self.next_level:
+            self.next_level_button.draw(surface)
+
     # Game mechanics
     def is_reachable(
         self, start: tuple[int, int], dest: tuple[int, int], max=2
@@ -1320,7 +1334,7 @@ class Animal(Board):
         ):  # Check if board is empty
             if self.level == 6:
                 return
-            self.init_board(self.score, self.level + 1, self.lifes)
+            self.next_level = True
 
         for i in range(self.board_size[0]):  # Check for possible move
             for j in range(self.board_size[1]):
@@ -1345,6 +1359,10 @@ class Animal(Board):
             for j in range(self.board_size[1]):
                 if self.board[i + 1][j + 1]:
                     self.board[i + 1][j + 1] = lst.pop()
+
+    def to_next_level(self):
+        self.next_level = False
+        self.init_board(self.score, self.level + 1, self.lifes)
 
     def move(self):
         if self.level == 1:
@@ -1480,3 +1498,11 @@ class Animal(Board):
                 else:
                     if self.board[pos[0]][pos[1]]:
                         self.clicked = pos
+
+        if self.next_level:  # Check the next level button
+            self.next_level_button.on_click(event)
+
+    def is_hover(self, mouse_pos):
+        if self.next_level:
+            self.next_level_button.is_hover(mouse_pos)
+        return
