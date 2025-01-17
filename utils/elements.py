@@ -1099,8 +1099,8 @@ class Animal(Board):
             self.board_size[0] * self.grid_size[0] - 1,
             self.board_size[1] * self.grid_size[1] - 1,
         )
+        self.load_sound()
         self.init_board()
-        self.next_level = True
 
     def init_board(self, score=0, level=0, lifes=10):  # Reinitiate the board
         self.timer = 18000
@@ -1149,6 +1149,10 @@ class Animal(Board):
             text="Next level",
             action=self.to_next_level,
         )
+
+    def load_sound(self):
+        self.sound_move = pygame.mixer.Sound(r"./data/sound/move.mp3")
+        self.sound_move.set_volume(0.3)
 
     # Drawing of board
     def draw(self, surface):  # Draw the board
@@ -1491,6 +1495,7 @@ class Animal(Board):
                             self.clicked[1]
                         ] = 0
                         self.score += 20
+                        pygame.mixer.Sound.play(self.sound_move)
                         self.pause = True
                     self.clicked = None
                 elif self.clicked:
