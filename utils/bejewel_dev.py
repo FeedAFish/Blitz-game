@@ -14,7 +14,7 @@ class Gem(elements.Element):
         self.y = y
         self.target_y = y
         self.target_x = x
-        self.special = False
+        self.special = 0
 
     def draw(self, surface, image, width):
         surface.blit(
@@ -195,14 +195,19 @@ class Board_Bejeweled(elements.Board):
                     count += 1
                 else:
                     if count >= 3:
+                        for i in range(count):
+                            if (col, row - i - 1) in self.matches:
+                                self.special.add((col, row - i - 1))
+                            self.matches.add((col, row - i - 1))
                         self.matches.update([(col, row - i - 1) for i in range(count)])
                         if count > 3:
                             self.special.add((col, row - 1))
                     count = 1
             if count >= 3:
-                self.matches.update(
-                    [(col, self.board_size - i - 1) for i in range(count)]
-                )
+                for i in range(count):
+                    if (col, self.board_size - i - 1) in self.matches:
+                        self.special.add((col, self.board_size - i - 1))
+                    self.matches.add((col, self.board_size - i - 1))
                 if count > 3:
                     self.special.add((col, self.board_size - 1))
 
@@ -214,14 +219,18 @@ class Board_Bejeweled(elements.Board):
                     count += 1
                 else:
                     if count >= 3:
-                        self.matches.update([(col - i - 1, row) for i in range(count)])
+                        for i in range(count):
+                            if (col - i - 1, row) in self.matches:
+                                self.special.add((col - i - 1, row))
+                            self.matches.add((col - i - 1, row))
                         if count > 3:
                             self.special.add((col - 1, row))
                     count = 1
             if count >= 3:
-                self.matches.update(
-                    [(self.board_size - i - 1, row) for i in range(count)]
-                )
+                for i in range(count):
+                    if (self.board_size - i - 1, row) in self.matches:
+                        self.special.add((self.board_size - i - 1, row))
+                    self.matches.add((self.board_size - i - 1, row))
                 if count > 3:
                     self.special.add((self.board_size - 1, row))
 
@@ -237,14 +246,19 @@ class Board_Bejeweled(elements.Board):
             else:
                 self.pause = False
             return
-        self.swap_made = None
-        self.score += 10 * len(self.matches)
-        self.animation = True
 
-        self.matches = self.matches - self.special
-        for col, row in self.special:
-            self.board[col][row].special = True
-        for col, row in sorted(self.matches, key=lambda x: (x[0], x[1]), reverse=True):
+        self.swap_made = None  # Reset/End swap state
+        self.score += 10 * len(self.matches)  # Add score by matches
+        self.animation = True  # Set animation to True to rerun self.move()
+
+        self.matches = self.matches - self.special  # Remove special gems from matches
+
+        for col, row in self.special:  # Special gems add
+            self.board[col][row].special = 1
+
+        for col, row in sorted(
+            self.matches, key=lambda x: (x[0], x[1]), reverse=True
+        ):  # Remove gems
             self.board[col].pop(row)
 
     def add_missing_gems(self):
