@@ -2,7 +2,7 @@ from utils import elements
 import pygame
 import random
 
-SPEED = 0.1
+SPEED = 0.2
 SIZE_REDUCE = 10
 
 
@@ -187,53 +187,43 @@ class Board_Bejeweled(elements.Board):
         self.special = None
         self.special = set()
 
+        # Check for vertical matches
         for col in range(self.board_size):
-            colors = [gem.color for gem in self.board[col]]
-            curr = colors[0]
             count = 1
-            for row in range(self.board_size - 1):
-                if colors[row + 1] == curr:
+            for row in range(1, self.board_size):
+                if self.board[col][row].color == self.board[col][row - 1].color:
                     count += 1
                 else:
                     if count >= 3:
-                        self.matches.update([(col, row - i) for i in range(count)])
+                        self.matches.update([(col, row - i - 1) for i in range(count)])
                         if count > 3:
-                            self.special.update([(col, row)])
-                    curr = colors[row + 1]
+                            self.special.add((col, row - 1))
                     count = 1
             if count >= 3:
                 self.matches.update(
-                    [(col, self.board_size - 1 - i) for i in range(count)]
+                    [(col, self.board_size - i - 1) for i in range(count)]
                 )
                 if count > 3:
-                    self.special.update([(col, row)])
-            # for row in range(self.board_size - 2):
-            #     if len(set(colors[row : row + 3])) == 1:
-            #         self.matches.update([(col, row), (col, row + 1), (col, row + 2)])
+                    self.special.add((col, self.board_size - 1))
 
+        # Check for horizontal matches
         for row in range(self.board_size):
-            colors = [self.board[col][row].color for col in range(self.board_size)]
-            curr = colors[0]
             count = 1
-            for col in range(self.board_size - 1):
-                if colors[col + 1] == curr:
+            for col in range(1, self.board_size):
+                if self.board[col][row].color == self.board[col - 1][row].color:
                     count += 1
                 else:
                     if count >= 3:
-                        self.matches.update([(col - i, row) for i in range(count)])
+                        self.matches.update([(col - i - 1, row) for i in range(count)])
                         if count > 3:
-                            self.special.update([(col, row)])
-                    curr = colors[col + 1]
+                            self.special.add((col - 1, row))
                     count = 1
             if count >= 3:
                 self.matches.update(
-                    [(self.board_size - 1 - i, row) for i in range(count)]
+                    [(self.board_size - i - 1, row) for i in range(count)]
                 )
                 if count > 3:
-                    self.special.update([(col, row)])
-            # for col in range(self.board_size - 2):
-            #     if len(set(colors[col : col + 3])) == 1:
-            #         self.matches.update([(col, row), (col + 1, row), (col + 2, row)])
+                    self.special.add((self.board_size - 1, row))
 
     def remove_matches(self):
         if len(self.matches) == 0:
