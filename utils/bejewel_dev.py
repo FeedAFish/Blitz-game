@@ -14,6 +14,7 @@ class Gem(elements.Element):
         self.y = y
         self.target_y = y
         self.target_x = x
+        self.special = False
 
     def draw(self, surface, image, width):
         surface.blit(
@@ -23,6 +24,18 @@ class Gem(elements.Element):
                 SIZE_REDUCE // 2 + width - (self.y + 1) * self.grid_size,
             ),
         )
+        if self.special:
+            pygame.draw.rect(
+                surface,
+                (255, 0, 0),
+                (
+                    self.x * self.grid_size,
+                    width - (self.y + 1) * self.grid_size,
+                    self.grid_size,
+                    self.grid_size,
+                ),
+                2,
+            )
 
     def update_position(self):
         if self.y == self.target_y and self.x == self.target_x:
@@ -61,6 +74,8 @@ class Board_Bejeweled(elements.Board):
             [Gem(j, i, random.randint(0, 6)) for i in range(self.board_size)]
             for j in range(self.board_size)
         ]  # Create a 2D array of gems by (col, row)
+
+        self.board[4][3].special = True
         self.clicked = None
         self.pause = True
         self.swap_made = None
@@ -169,18 +184,56 @@ class Board_Bejeweled(elements.Board):
     def find_regular_matches(self):
         self.matches = None
         self.matches = set()
+        self.special = None
+        self.special = set()
 
         for col in range(self.board_size):
             colors = [gem.color for gem in self.board[col]]
-            for row in range(self.board_size - 2):
-                if len(set(colors[row : row + 3])) == 1:
-                    self.matches.update([(col, row), (col, row + 1), (col, row + 2)])
+            curr = colors[0]
+            count = 1
+            for row in range(self.board_size - 1):
+                if colors[row + 1] == curr:
+                    count += 1
+                else:
+                    if count >= 3:
+                        self.matches.update([(col, row - i) for i in range(count)])
+                        if count > 3:
+                            self.special.update([(col, row)])
+                    curr = colors[row + 1]
+                    count = 1
+            if count >= 3:
+                self.matches.update(
+                    [(col, self.board_size - 1 - i) for i in range(count)]
+                )
+                if count > 3:
+                    self.special.update([(col, row)])
+            # for row in range(self.board_size - 2):
+            #     if len(set(colors[row : row + 3])) == 1:
+            #         self.matches.update([(col, row), (col, row + 1), (col, row + 2)])
 
         for row in range(self.board_size):
             colors = [self.board[col][row].color for col in range(self.board_size)]
-            for col in range(self.board_size - 2):
-                if len(set(colors[col : col + 3])) == 1:
-                    self.matches.update([(col, row), (col + 1, row), (col + 2, row)])
+            curr = colors[0]
+            count = 1
+            for col in range(self.board_size - 1):
+                if colors[col + 1] == curr:
+                    count += 1
+                else:
+                    if count >= 3:
+                        self.matches.update([(col - i, row) for i in range(count)])
+                        if count > 3:
+                            self.special.update([(col, row)])
+                    curr = colors[col + 1]
+                    count = 1
+            if count >= 3:
+                self.matches.update(
+                    [(self.board_size - 1 - i, row) for i in range(count)]
+                )
+                if count > 3:
+                    self.special.update([(col, row)])
+            # for col in range(self.board_size - 2):
+            #     if len(set(colors[col : col + 3])) == 1:
+            #         self.matches.update([(col, row), (col + 1, row), (col + 2, row)])
 
     def remove_matches(self):
         if len(self.matches) == 0:
@@ -197,10 +250,12 @@ class Board_Bejeweled(elements.Board):
         self.swap_made = None
         self.score += 10 * len(self.matches)
         self.animation = True
+
+        self.matches = self.matches - self.special
+        for col, row in self.special:
+            self.board[col][row].special = True
         for col, row in sorted(self.matches, key=lambda x: (x[0], x[1]), reverse=True):
             self.board[col].pop(row)
-
-        self.matches = set()
 
     def add_missing_gems(self):
         for i, col in enumerate(self.board):
