@@ -1,4 +1,4 @@
-FROM python:3.10.8
+FROM python:3.10-slim
 
 # Install system dependencies including ALSA
 RUN apt-get update && apt-get install -y \
