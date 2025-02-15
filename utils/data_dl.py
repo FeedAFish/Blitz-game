@@ -40,7 +40,7 @@ class Download_UI:
             # Download the data
             self.root.after(1000, self.create_popup_message, "Downloading data...")
             try:
-                self.download_data(version, url)
+                self.download_data(url)
                 self.root.after(1000, self.create_popup_message, "Data is up to date !")
                 # Close the window after 2 seconds
             except Exception as e:
