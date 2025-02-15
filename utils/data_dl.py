@@ -68,7 +68,7 @@ class Download_UI:
             or open("data/version.ini").read() != version
         )
 
-    def download_data(self, version, url):
+    def download_data(self, url):
         if os.path.exists("data.7z"):
             os.remove("data.7z")
         # Download the zip file
