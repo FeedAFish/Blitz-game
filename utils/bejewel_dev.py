@@ -2,7 +2,7 @@ from utils import elements
 import pygame
 import random
 
-SPEED = 0.2
+SPEED = 0.15
 SIZE_REDUCE = 10
 
 
@@ -17,6 +17,7 @@ class Gem(elements.Element):
         self.special = 0
 
     def draw(self, surface, image, width):
+        color = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
         surface.blit(
             image,
             (
@@ -25,9 +26,10 @@ class Gem(elements.Element):
             ),
         )
         if self.special:
+
             pygame.draw.rect(
                 surface,
-                (255, 0, 0),
+                color[self.special - 1],
                 (
                     self.x * self.grid_size,
                     width - (self.y + 1) * self.grid_size,
@@ -75,7 +77,6 @@ class Board_Bejeweled(elements.Board):
             for j in range(self.board_size)
         ]  # Create a 2D array of gems by (col, row)
 
-        self.board[4][3].special = True
         self.clicked = None
         self.pause = True
         self.swap_made = None
@@ -182,10 +183,10 @@ class Board_Bejeweled(elements.Board):
 
     # Mechannics
     def find_regular_matches(self):
-        self.matches = None
         self.matches = set()
-        self.special = None
-        self.special = set()
+        self.special_vertical = set()
+        self.special_horizontal = set()
+        self.special_Lshape = set()
 
         # Check for vertical matches
         for col in range(self.board_size):
@@ -197,19 +198,19 @@ class Board_Bejeweled(elements.Board):
                     if count >= 3:
                         for i in range(count):
                             if (col, row - i - 1) in self.matches:
-                                self.special.add((col, row - i - 1))
+                                self.special_Lshape.add((col, row - i - 1))
                             self.matches.add((col, row - i - 1))
                         self.matches.update([(col, row - i - 1) for i in range(count)])
                         if count > 3:
-                            self.special.add((col, row - 1))
+                            self.special_vertical.add((col, row - 1))
                     count = 1
             if count >= 3:
                 for i in range(count):
                     if (col, self.board_size - i - 1) in self.matches:
-                        self.special.add((col, self.board_size - i - 1))
+                        self.special_Lshape.add((col, self.board_size - i - 1))
                     self.matches.add((col, self.board_size - i - 1))
                 if count > 3:
-                    self.special.add((col, self.board_size - 1))
+                    self.special_vertical.add((col, self.board_size - 1))
 
         # Check for horizontal matches
         for row in range(self.board_size):
@@ -221,18 +222,44 @@ class Board_Bejeweled(elements.Board):
                     if count >= 3:
                         for i in range(count):
                             if (col - i - 1, row) in self.matches:
-                                self.special.add((col - i - 1, row))
+                                self.special_Lshape.add((col - i - 1, row))
                             self.matches.add((col - i - 1, row))
                         if count > 3:
-                            self.special.add((col - 1, row))
+                            self.special_horizontal.add((col - 1, row))
                     count = 1
             if count >= 3:
                 for i in range(count):
                     if (self.board_size - i - 1, row) in self.matches:
-                        self.special.add((self.board_size - i - 1, row))
+                        self.special_Lshape.add((self.board_size - i - 1, row))
                     self.matches.add((self.board_size - i - 1, row))
                 if count > 3:
-                    self.special.add((self.board_size - 1, row))
+                    self.special_horizontal.add((self.board_size - 1, row))
+
+    def proc_special_gems(self, gem_set: set):
+        additional = set()
+        for col, row in gem_set:
+            if self.board[col][row].special:
+                additional = self.update_additional(additional, col, row)
+        additional -= self.matches
+
+        self.matches.update(additional)
+        if additional:
+            self.proc_special_gems(additional)
+
+    def update_additional(self, additional, col, row):
+        if self.board[col][row].special == 1:
+            additional.update([(col, i) for i in range(self.board_size)])
+        elif self.board[col][row].special == 2:
+            additional.update([(i, row) for i in range(self.board_size)])
+        elif self.board[col][row].special == 3:
+            additional.update(
+                [
+                    (i, j)
+                    for i in range(max(0, col - 1), min(self.board_size, col + 2))
+                    for j in range(max(0, row - 1), min(self.board_size, row + 2))
+                ]
+            )
+        return additional
 
     def remove_matches(self):
         if len(self.matches) == 0:
@@ -246,15 +273,26 @@ class Board_Bejeweled(elements.Board):
             else:
                 self.pause = False
             return
-
+        self.proc_special_gems(self.matches)
         self.swap_made = None  # Reset/End swap state
         self.score += 10 * len(self.matches)  # Add score by matches
         self.animation = True  # Set animation to True to rerun self.move()
 
-        self.matches = self.matches - self.special  # Remove special gems from matches
+        self.matches = (
+            self.matches
+            - self.special_vertical
+            - self.special_horizontal
+            - self.special_Lshape
+        )  # Keep special gems
 
-        for col, row in self.special:  # Special gems add
+        for col, row in self.special_horizontal:  # Special gems add
             self.board[col][row].special = 1
+
+        for col, row in self.special_vertical:  # Special gems add
+            self.board[col][row].special = 2
+
+        for col, row in self.special_Lshape:  # Special gems add
+            self.board[col][row].special = 3
 
         for col, row in sorted(
             self.matches, key=lambda x: (x[0], x[1]), reverse=True
