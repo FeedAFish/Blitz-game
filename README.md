@@ -64,3 +64,6 @@ Errors are logged to error.log with timestamps for debugging.
 
 ### Version 0.4
 - Added Animal game with basic mechanics of 7 levels
+
+### Version 0.5
+- Add Bejeweled Diamond Game
