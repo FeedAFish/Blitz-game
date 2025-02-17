@@ -1,6 +1,7 @@
 import pygame
 import sys
 from utils import elements
+from utils import bejewel_dev
 
 # from utils import xo
 
@@ -62,6 +63,7 @@ class Game:
             else {
                 "2048": self.board_2048,
                 "Animal": self.board_animal,
+                "Bejeweled": self.board_bejeweled,
                 "Next": lambda: self.choice_menu(1),
                 "Main Menu": self.main_menu,
             }
@@ -163,20 +165,17 @@ class Game:
         }
         self.add_menu_ingame(menus)
 
-    # Board X-O
-    # def board_xo(self):
-    #     self.background = self.board
-    #     self.fps = 60
-    #     self.fps_base = False
-    #     self.load_list = []
-    #     self.load_list.append(xo.GameXO(90, 90))
-    #     menus = {
-    #         "Restart": self.load_list[0].init_board,
-    #         "Main Menu": self.main_menu,
-    #         # "Switch player": self.load_list[0].switch_player,
-    #         # "Switch mode": self.load_list[0].switch_mode,
-    #     }
-    #     self.add_menu_ingame(menus)
+    def board_bejeweled(self):
+        self.background = self.board
+        self.fps = 60
+        self.fps_base = False
+        self.load_list = []
+        self.load_list.append(bejewel_dev.Board_Bejeweled(90, 90))
+        menus = {
+            "Restart": self.load_list[0].init_board,
+            "Main Menu": self.main_menu,
+        }
+        self.add_menu_ingame(menus)
 
     # Handle in-app events
     def handle_events(self):

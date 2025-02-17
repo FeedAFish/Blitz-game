@@ -177,5 +177,5 @@ pyrightconfig.json
 
 data/
 *.exe
-test.py
+test*.py
 data.7z
