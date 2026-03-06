@@ -30,34 +30,51 @@ class Download_UI:
             self.label = tk.Label(self.root, text="Checking data...", font=(None, 12))
 
         self.label.pack(expand=True)
-        self.thread = threading.Thread(target=self.main, args=(version, url))
+        self.thread = threading.Thread(target=self.main, args=(version, url), daemon=True)
         self.thread.start()
-        self.root.mainloop()
-        self.thread.join()
+        try:
+            self.root.mainloop()
+        except:
+            pass
+        finally:
+            try:
+                self.root.quit()
+                self.root.destroy()
+            except:
+                pass
 
     def main(self, version, url):
-        if self.checking(version):
-            # Download the data
-            self.root.after(1000, self.create_popup_message, "Downloading data...")
-            try:
-                self.download_data(url)
-                self.root.after(1000, self.create_popup_message, "Data is up to date !")
-                # Close the window after 2 seconds
-            except Exception as e:
-                self.root.after(
-                    1000, self.create_popup_message, f"Error downloading data !"
-                )
-                with open("error.log", "a") as f:
-                    f.writelines("\n")
-                    f.writelines(
-                        "At "
-                        + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        + " :\n"
+        try:
+            if self.checking(version):
+                # Download the data
+                self.root.after(1000, self.create_popup_message, "Downloading data...")
+                try:
+                    self.download_data(url)
+                    self.root.after(1000, self.create_popup_message, "Data is up to date !")
+                    # Close the window after 2 seconds
+                except Exception as e:
+                    self.root.after(
+                        1000, self.create_popup_message, f"Error downloading data !"
                     )
-                    f.writelines(f"Error downloading data ! " + str(e))
-        else:
-            self.root.after(1000, self.create_popup_message, "Data is up to date !")
-        self.root.after(2000, self.root.destroy)
+                    with open("error.log", "a") as f:
+                        f.writelines("\n")
+                        f.writelines(
+                            "At "
+                            + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            + " :\n"
+                        )
+                        f.writelines(f"Error downloading data ! " + str(e))
+            else:
+                self.root.after(1000, self.create_popup_message, "Data is up to date !")
+            self.root.after(2000, self.safe_destroy)
+        except:
+            pass
+
+    def safe_destroy(self):
+        try:
+            self.root.quit()
+        except:
+            pass
 
     def create_popup_message(self, message):
         self.label.config(text=message)
